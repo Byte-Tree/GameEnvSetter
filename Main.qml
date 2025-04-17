@@ -37,14 +37,18 @@ ApplicationWindow {
             Button {
                 text: "保存当前设置"
                 onClicked: {
-                    saveFileDialog.open()
+                    try {
+                        saveFileDialog.open()
+                    } catch(error) {
+                        toolTip.show("保存配置失败：" + error, 3000)
+                    }
                 }
             }
 
             Button {
                 text: "还原默认设置"
                 onClicked: {
-                    if(configManager.configExists()) {
+                    try {
                         var config = configManager.loadConfig()
                         mouseConfig.setDoubleClickSpeed(config.mouse.doubleClickSpeed)
                         mouseConfig.setMouseSpeed(config.mouse.mouseSpeed)
@@ -52,7 +56,9 @@ ApplicationWindow {
                         keyboardConfig.setRepeatDelay(config.keyboard.repeatDelay)
                         keyboardConfig.setRepeatRate(config.keyboard.repeatRate)
                         registryOperator.setWin32PrioritySeparation(config.registry.win32PrioritySeparation)
-                        toolTip.show("已还原默认配置", 2000)
+                        toolTip.show("默认配置已应用", 2000)
+                    } catch(error) {
+                        toolTip.show("加载默认配置失败：" + error, 3000)
                     }
                 }
             }
@@ -350,7 +356,12 @@ ApplicationWindow {
                       win32PrioritySeparation: registryOperator.win32PrioritySeparation
                   }
               };
-              configManager.saveUserConfig(currentConfig, currentFile);
+              try {
+    configManager.saveUserConfig(currentConfig, saveFileDialog.currentFile);
+    toolTip.show("用户配置已保存", 2000);
+} catch(error) {
+    toolTip.show("保存失败：" + error, 3000);
+}
               toolTip.show("用户配置已保存", 2000);
           }
         }
@@ -367,6 +378,7 @@ ApplicationWindow {
               keyboardConfig.setRepeatDelay(config.keyboard.repeatDelay)
               keyboardConfig.setRepeatRate(config.keyboard.repeatRate)
               registryOperator.setWin32PrioritySeparation(config.registry.win32PrioritySeparation)
+              toolTip.show("三方配置已应用", 2000)
           }
     }
 

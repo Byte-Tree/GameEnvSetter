@@ -5,7 +5,8 @@
 
 ConfigManager::ConfigManager(QObject *parent) : QObject(parent)
 {
-    //QString configDir = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
+
+    
     QString configDir = QCoreApplication::applicationDirPath();
     QDir().mkpath(configDir);
     m_configPath = configDir + "/config.ini";
@@ -16,9 +17,14 @@ bool ConfigManager::configExists() const
     return QFile::exists(m_configPath);
 }
 
+
+
 void ConfigManager::saveUserConfig(const QVariantMap &config, const QString &path)
 {
-    QSettings settings(path, QSettings::IniFormat);
+    try {
+        QString cleanPath = path.startsWith("file:///") ? path.mid(8) : path;//qml传过来的路径有这个字符串，得去除才能保存
+        QSettings settings(cleanPath, QSettings::IniFormat);
+        settings.setValue("LastModified", QDateTime::currentDateTime());
     
     settings.beginGroup("Mouse");
     settings.setValue("DoubleClickSpeed", config["mouse"].toMap()["doubleClickSpeed"]);
@@ -34,10 +40,23 @@ void ConfigManager::saveUserConfig(const QVariantMap &config, const QString &pat
     settings.beginGroup("Registry");
     settings.setValue("Win32PrioritySeparation", config["registry"].toMap()["win32PrioritySeparation"]);
     settings.endGroup();
+    settings.sync();
+    if(settings.status() != QSettings::NoError) {
+        emit errorOccurred("配置文件写入失败");
+    }
+    else {
+        emit configSaved();
+    }
+    }    catch (const std::exception &e) {
+        emit errorOccurred(QString("保存失败: ") + e.what());
+        //throw;
+    }
+
 }
 
 void ConfigManager::saveConfig(const QVariantMap &config)
 {
+    try{
     QSettings settings(m_configPath, QSettings::IniFormat);
     
     settings.beginGroup("Mouse");
@@ -54,6 +73,18 @@ void ConfigManager::saveConfig(const QVariantMap &config)
     settings.beginGroup("Registry");
     settings.setValue("Win32PrioritySeparation", config["registry"].toMap()["win32PrioritySeparation"]);
     settings.endGroup();
+    settings.sync();
+    if(settings.status() != QSettings::NoError) {
+        emit errorOccurred("配置文件写入失败");
+    }
+    else {
+        emit configSaved();
+    }
+    }
+    catch (const std::exception &e) {
+        emit errorOccurred(QString("保存失败: ") + e.what());
+        //throw;
+    }
 }
 
 QVariantMap ConfigManager::loadConfig() const
@@ -67,12 +98,13 @@ QVariantMap ConfigManager::loadFromPath(const QString &filePath) const {
     QVariantMap keyboardConfig;
     QVariantMap registryConfig;
 
-    if(!QFile::exists(filePath)) {
+    QString cleanPath = filePath.startsWith("file:///") ? filePath.mid(8) : filePath;//qml传过来的路径有这个字符串，得去除才能保存
+    if(!QFile::exists(cleanPath)) {
         emit errorOccurred("配置文件不存在");
         return config;
     }
 
-    QSettings settings(filePath, QSettings::IniFormat);
+    QSettings settings(cleanPath, QSettings::IniFormat);
     
     settings.beginGroup("Mouse");
     mouseConfig["doubleClickSpeed"] = settings.value("DoubleClickSpeed");

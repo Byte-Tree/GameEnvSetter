@@ -11,6 +11,7 @@ public:
     explicit ConfigManager(QObject *parent = nullptr);
     
     Q_INVOKABLE bool configExists() const;
+    
     Q_INVOKABLE void saveConfig(const QVariantMap &config);
     Q_INVOKABLE void saveUserConfig(const QVariantMap &config, const QString &path);
     Q_INVOKABLE QVariantMap loadFromPath(const QString &filePath) const;
@@ -18,6 +19,7 @@ public:
     
 signals:
     void errorOccurred(const QString &msg) const;
+    void configSaved() const;
     
 private:
     QString m_configPath;
