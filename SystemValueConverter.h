@@ -7,7 +7,6 @@
 
 class SystemValueConverter : public QObject {
     Q_OBJECT
-    QML_ELEMENT
 public:
     explicit SystemValueConverter(QObject* parent = nullptr);
 
@@ -15,4 +14,5 @@ public:
     static int denormalizeMouseSpeed(double normalized);
     static QVariant registryToDisplay(DWORD value);
     static DWORD displayToRegistry(const QVariant& value);
+    Q_INVOKABLE static QVariant convertToRegistryFormat(const QString& value);
 };

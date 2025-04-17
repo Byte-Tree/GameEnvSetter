@@ -34,3 +34,20 @@ DWORD SystemValueConverter::displayToRegistry(const QVariant& value) {
     // 处理十进制数值
     return str.toUInt(&ok);
 }
+
+QVariant SystemValueConverter::convertToRegistryFormat(const QString& value) {
+    bool ok;
+    QString str = value.trimmed();
+    
+    // 处理十六进制输入
+    if(str.startsWith("0x")) {
+        uint hexValue = str.toUInt(&ok, 16);
+        if(!ok) return QVariant::fromValue(QString("无效的十六进制值"));
+        return QVariant(hexValue);
+    }
+    
+    // 处理十进制数值
+    uint decValue = str.toUInt(&ok);
+    if(!ok) return QVariant::fromValue(QString("无效的十进制值"));
+    return QVariant(decValue);
+}

@@ -18,6 +18,8 @@ qt_add_executable(appGameEnvSetter
     RegistryOperator.h
     SystemValueConverter.cpp
     SystemValueConverter.h
+    ConfigManager.cpp
+    ConfigManager.h
 
 )
 
@@ -30,9 +32,6 @@ qt_add_qml_module(appGameEnvSetter
     VERSION 1.0
     QML_FILES
         Main.qml
-    SOURCES
-        SystemValueConverter.cpp
-        SystemValueConverter.h
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.

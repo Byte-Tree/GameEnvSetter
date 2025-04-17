@@ -1,8 +1,11 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
+
 #include "MouseConfigManager.h"
 #include "KeyboardConfigManager.h"
 #include "RegistryOperator.h"
+#include "SystemValueConverter.h"
+#include "ConfigManager.h"
 
 int main(int argc, char *argv[])
 {
@@ -11,6 +14,14 @@ int main(int argc, char *argv[])
     qmlRegisterType<MouseConfigManager>("ConfigManagers", 1, 0, "MouseConfigManager");
     qmlRegisterType<KeyboardConfigManager>("ConfigManagers", 1, 0, "KeyboardConfigManager");
     qmlRegisterType<RegistryOperator>("ConfigManagers", 1, 0, "RegistryOperator");
+    qmlRegisterType<ConfigManager>("ConfigManagers", 1, 0, "ConfigManager");
+
+    qmlRegisterSingletonType<SystemValueConverter>(
+        "SystemValueConverter", // URI
+        1, 0,                  // 版本号
+        "SystemValueConverter",            // 在QML中使用的名称
+        [](QQmlEngine*, QJSEngine*) -> QObject* { return new SystemValueConverter(); } // 构造函数指针或lambda表达式创建实例
+        );
 
     QQmlApplicationEngine engine;
     const QUrl url(QStringLiteral("qrc:/GameEnvSetter/Main.qml"));
