@@ -109,7 +109,7 @@ QVariantMap ConfigManager::loadFromPath(const QString &filePath) const {
     settings.beginGroup("Mouse");
     mouseConfig["doubleClickSpeed"] = settings.value("DoubleClickSpeed");
     mouseConfig["mouseSpeed"] = settings.value("MouseSpeed");
-    mouseConfig["enhancePointerPrecision"] = settings.value("EnhancePointerPrecision");
+    mouseConfig["enhancePointerPrecision"] = settings.value("EnhancePointerPrecision").toBool();
     settings.endGroup();
     
     settings.beginGroup("Keyboard");
