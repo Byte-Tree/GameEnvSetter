@@ -6,7 +6,7 @@ import SystemValueConverter 1.0
 GroupBox {
     title: "注册表设置"
     Layout.fillWidth: true
-    implicitHeight: 180
+    implicitHeight: 190
     ColumnLayout {
         spacing: 15
         width: parent.width

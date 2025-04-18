@@ -20,6 +20,8 @@ qt_add_executable(appGameEnvSetter
     SystemValueConverter.h
     ConfigManager.cpp
     ConfigManager.h
+    GraphicsConfigManager.cpp
+    GraphicsConfigManager.h
 
 )
 
@@ -35,6 +37,7 @@ qt_add_qml_module(appGameEnvSetter
         MouseSettings.qml
         KeyboardSettings.qml
         RegistrySettings.qml
+        GraphicsSettings.qml
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
@@ -50,7 +53,10 @@ set_target_properties(appGameEnvSetter PROPERTIES
 
 target_link_libraries(appGameEnvSetter
     PRIVATE Qt6::Quick
+    PRIVATE "D:/myprojects/R560-developer/amd64/nvapi64.lib"
 )
+
+include_directories("D:/myprojects/R560-developer")
 
 include(GNUInstallDirs)
 install(TARGETS appGameEnvSetter

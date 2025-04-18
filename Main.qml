@@ -79,10 +79,13 @@ ApplicationWindow {
         KeyboardSettings {}
 
         RegistrySettings {}
+
+        GraphicsSettings {}
         }
     }
 
 
+    //传递错误信号
     Connections {
         target: mouseConfig
         function onErrorOccurred(msg) { toolTip.show(msg, 2000) }
@@ -137,6 +140,7 @@ ApplicationWindow {
         }
     }
 
+    //自定义动感弹窗
     Item {
         id: toolTipContainer
         anchors.centerIn: parent
@@ -150,50 +154,52 @@ ApplicationWindow {
         }
     }
 
-        Platform.FileDialog {
-          id: saveFileDialog
-          title: "保存配置文件"
-          nameFilters: ["INI文件 (*.ini)"]
-          fileMode: Platform.FileDialog.SaveFile
-          onAccepted: {
-              var currentConfig = {
-                  "mouse": {
-                      doubleClickSpeed: mouseConfig.doubleClickSpeed,
-                      mouseSpeed: mouseConfig.mouseSpeed,
-                      enhancePointerPrecision: mouseConfig.enhancePointerPrecision
-                  },
-                  "keyboard": {
-                      repeatDelay: keyboardConfig.repeatDelay,
-                      repeatRate: keyboardConfig.repeatRate
-                  },
-                  "registry": {
-                      win32PrioritySeparation: registryOperator.win32PrioritySeparation
-                  }
-              };
-              try {
-    configManager.saveUserConfig(currentConfig, saveFileDialog.currentFile);
-    toolTip.show("用户配置已保存", 2000);
-} catch(error) {
-    toolTip.show("保存失败：" + error, 3000);
-}
-              toolTip.show("用户配置已保存", 2000);
-          }
-        }
 
-        Platform.FileDialog {
-          id: fileDialog
-          title: "选择配置文件"
-          nameFilters: ["用户配置 (*.ini)"]
-          onAccepted: {
-              var config = configManager.loadFromPath(fileDialog.currentFile)
-              mouseConfig.setDoubleClickSpeed(config.mouse.doubleClickSpeed)
-              mouseConfig.setMouseSpeed(config.mouse.mouseSpeed)
-              mouseConfig.setEnhancePointerPrecision(config.mouse.enhancePointerPrecision)
-              keyboardConfig.setRepeatDelay(config.keyboard.repeatDelay)
-              keyboardConfig.setRepeatRate(config.keyboard.repeatRate)
-              registryOperator.setWin32PrioritySeparation(config.registry.win32PrioritySeparation)
-              toolTip.show("三方配置已应用", 2000)
-          }
+    Platform.FileDialog {
+      id: saveFileDialog
+      title: "保存配置文件"
+      nameFilters: ["INI文件 (*.ini)"]
+      fileMode: Platform.FileDialog.SaveFile
+      onAccepted: {
+          var currentConfig = {
+              "mouse": {
+                  doubleClickSpeed: mouseConfig.doubleClickSpeed,
+                  mouseSpeed: mouseConfig.mouseSpeed,
+                  enhancePointerPrecision: mouseConfig.enhancePointerPrecision
+              },
+              "keyboard": {
+                  repeatDelay: keyboardConfig.repeatDelay,
+                  repeatRate: keyboardConfig.repeatRate
+              },
+              "registry": {
+                  win32PrioritySeparation: registryOperator.win32PrioritySeparation
+              }
+          };
+          try {
+                    configManager.saveUserConfig(currentConfig, saveFileDialog.currentFile);
+                    toolTip.show("用户配置已保存", 2000);
+            }
+          catch(error){
+                    toolTip.show("保存失败：" + error, 3000);
+            }
+            toolTip.show("用户配置已保存", 2000);
+      }
+    }
+
+    Platform.FileDialog {
+      id: fileDialog
+      title: "选择配置文件"
+      nameFilters: ["用户配置 (*.ini)"]
+      onAccepted: {
+          var config = configManager.loadFromPath(fileDialog.currentFile)
+          mouseConfig.setDoubleClickSpeed(config.mouse.doubleClickSpeed)
+          mouseConfig.setMouseSpeed(config.mouse.mouseSpeed)
+          mouseConfig.setEnhancePointerPrecision(config.mouse.enhancePointerPrecision)
+          keyboardConfig.setRepeatDelay(config.keyboard.repeatDelay)
+          keyboardConfig.setRepeatRate(config.keyboard.repeatRate)
+          registryOperator.setWin32PrioritySeparation(config.registry.win32PrioritySeparation)
+          toolTip.show("三方配置已应用", 2000)
+      }
     }
 
 }

@@ -6,6 +6,7 @@
 #include "RegistryOperator.h"
 #include "SystemValueConverter.h"
 #include "ConfigManager.h"
+#include "GraphicsConfigManager.h"
 
 int main(int argc, char *argv[])
 {
@@ -15,6 +16,7 @@ int main(int argc, char *argv[])
     qmlRegisterType<KeyboardConfigManager>("ConfigManagers", 1, 0, "KeyboardConfigManager");
     qmlRegisterType<RegistryOperator>("ConfigManagers", 1, 0, "RegistryOperator");
     qmlRegisterType<ConfigManager>("ConfigManagers", 1, 0, "ConfigManager");
+    qmlRegisterType<GraphicsConfigManager>("ConfigManagers", 1, 0, "GraphicsConfigManager");
 
     qmlRegisterSingletonType<SystemValueConverter>(
         "SystemValueConverter", // URI
