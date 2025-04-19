@@ -16,8 +16,6 @@ const unsigned int NV_MEMORY_FALLBACK_POLICY_SETTING_ID = 0x10A9F5C5; // 内存�
 #define NVAPI_BINARY_DATA_MAX_SIZE 4096
 
 bool GraphicsConfigManager::getImageSharpeningStatus() {
-    // 添加延迟以避免与Qt的D3D11渲染冲突
-    QThread::msleep(100);
     
     NvDRSSessionHandle hSession = 0;
     NvDRSProfileHandle hProfile = 0;
@@ -96,8 +94,8 @@ void GraphicsConfigManager::setImageSharpening(bool enabled) {
     setting.settingType = NVDRS_DWORD_TYPE;
     setting.u32CurrentValue = enabled ? 1 : 0;
     
-    NvAPI_DRS_SetSetting(hSession, hProfile, &setting);
-    NvAPI_DRS_SaveSettings(hSession);
+    // NvAPI_DRS_SetSetting(hSession, hProfile, &setting);
+    // NvAPI_DRS_SaveSettings(hSession);
     
     NvAPI_DRS_DestroySession(hSession);
     NvAPI_Unload();

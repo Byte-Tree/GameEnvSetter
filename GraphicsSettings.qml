@@ -37,7 +37,7 @@ GroupBox {
                         title: "管理3D设置"
                         ColumnLayout {
                             spacing: 8
-                            //RowLayout { Label { text: "图形增强" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "用AI提高帧数（适合看风景，但会加剧远处模糊感）。" } ComboBox { model: ["关", "开"]; currentIndex: graphicsConfig.getImageSharpeningStatus ? 1 : 0; onActivated: function(index) { graphicsConfig.setImageSharpening(index === 1) } } }
+                            RowLayout { Label { text: "图形增强" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "用AI提高帧数（适合看风景，但会加剧远处模糊感）。" } ComboBox { model: ["关", "开"]; currentIndex: graphicsConfig.getImageSharpeningStatus() ? 1 : 0; onActivated: function(index) { graphicsConfig.setImageSharpening(index === 1) } } }
                             //RowLayout { Label { text: "CUDA - GPUs" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "多显卡默认配置。" } ComboBox { model: graphicsConfig.availableGPUs; currentIndex: -1; onActivated: graphicsConfig.setSelectedGPUs([model[index]]) } }
                             //RowLayout { Label { text: "CUDA - 系统内存回退政策" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "显存不足时使用内存补充。" } ComboBox { model: ["驱动默认值", "偏好无系统内存回退", "偏好系统内存回退"]; currentIndex: graphicsConfig.memoryFallbackPolicy; onActivated: graphicsConfig.setMemoryFallbackPolicy(index) } }
                             RowLayout { Label { text: "DSR - 因数" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "伪分辨率技术（适合看风景）。" } ComboBox { model: [] } }
