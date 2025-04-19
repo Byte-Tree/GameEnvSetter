@@ -16,6 +16,7 @@ ApplicationWindow {
     MouseConfigManager { id: mouseConfig }
     KeyboardConfigManager { id: keyboardConfig }
     RegistryOperator { id: registryOperator }
+    GraphicsConfigManager{ id: graphicsConfig }
     ConfigManager { id: configManager }
 
     Component.onCompleted: {

@@ -1,42 +1,60 @@
 #include "GraphicsConfigManager.h"
 #include "nvapi.h"
+#include <QtCore/QThread>
+#include <QtCore/QDebug>
 
-// NVAPI 设置ID常量定义
-#define NV_IMAGE_SHARPENING_SETTING_ID 0x00000000
-#define NV_CUDA_EXCLUDED_GPUS_SETTING_ID 0x00000000
-#define NV_MEMORY_FALLBACK_POLICY_SETTING_ID 0x00000000
+typedef int NVAPI_STATUS; // 添加NVAPI_STATUS类型定义
+#include "NvApiDriverSettings.h"
+
+// NVIDIA 设置ID常量定义
+const unsigned int NV_IMAGE_SHARPENING_SETTING_ID = 0x1055E772; // NVIDIA图像锐化设置ID
+const unsigned int NV_CUDA_EXCLUDED_GPUS_SETTING_ID = 0x2093CBE8; // CUDA排除GPU设置ID
+const unsigned int NV_MEMORY_FALLBACK_POLICY_SETTING_ID = 0x10A9F5C5; // 内存回退策略设置ID
 
 // NVAPI 字符串长度定义
 #define NVAPI_SHORT_STRING_LENGTH 64
 #define NVAPI_BINARY_DATA_MAX_SIZE 4096
 
 bool GraphicsConfigManager::getImageSharpeningStatus() {
+    // 添加延迟以避免与Qt的D3D11渲染冲突
+    QThread::msleep(100);
+    
     NvDRSSessionHandle hSession = 0;
     NvDRSProfileHandle hProfile = 0;
     NVDRS_SETTING setting = {0};
     
-    if (NvAPI_Initialize() != NVAPI_OK) {
+    NVAPI_STATUS status = NvAPI_Initialize();
+    if (status != NVAPI_OK) {
+        qWarning() << "NvAPI_Initialize failed with error:" << status;
         return false;
     }
     
-    if (NvAPI_DRS_CreateSession(&hSession) != NVAPI_OK) {
+    status = NvAPI_DRS_CreateSession(&hSession);
+    if (status != NVAPI_OK) {
+        qWarning() << "NvAPI_DRS_CreateSession failed with error:" << status;
         NvAPI_Unload();
         return false;
     }
     
-    if (NvAPI_DRS_LoadSettings(hSession) != NVAPI_OK) {
+    status = NvAPI_DRS_LoadSettings(hSession);
+    if (status != NVAPI_OK) {
+        qWarning() << "NvAPI_DRS_LoadSettings failed with error:" << status;
         NvAPI_DRS_DestroySession(hSession);
         NvAPI_Unload();
         return false;
     }
     
-    if (NvAPI_DRS_GetBaseProfile(hSession, &hProfile) != NVAPI_OK) {
+    status = NvAPI_DRS_GetBaseProfile(hSession, &hProfile);
+    if (status != NVAPI_OK) {
+        qWarning() << "NvAPI_DRS_GetBaseProfile failed with error:" << status;
         NvAPI_DRS_DestroySession(hSession);
         NvAPI_Unload();
         return false;
     }
     
-    if (NvAPI_DRS_GetSetting(hSession, hProfile, NV_IMAGE_SHARPENING_SETTING_ID, &setting) != NVAPI_OK) {
+    status = NvAPI_DRS_GetSetting(hSession, hProfile, NV_IMAGE_SHARPENING_SETTING_ID, &setting);
+    if (status != NVAPI_OK) {
+        qWarning() << "NvAPI_DRS_GetSetting failed with error:" << status;
         NvAPI_DRS_DestroySession(hSession);
         NvAPI_Unload();
         return false;

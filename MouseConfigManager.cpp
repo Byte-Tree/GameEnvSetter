@@ -15,12 +15,9 @@ void MouseConfigManager::setDoubleClickSpeed(int ms) {
         emit errorOccurred(tr("双击速度需在100-900毫秒之间"));
         return;
     }
-    if(updateSystemParameter(SPI_SETDOUBLECLICKTIME, ms)) {
-        emit doubleClickSpeedChanged();
-    } else {
-        // 恢复原值并通知前端更新
+    if(!updateSystemParameter(SPI_SETDOUBLECLICKTIME, ms)) {
+        // 恢复原值
         SystemParametersInfo(SPI_SETDOUBLECLICKTIME, current, nullptr, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
-        emit doubleClickSpeedChanged();
     }
 }
 
@@ -45,7 +42,6 @@ void MouseConfigManager::setMouseSpeed(int speed) {
         }
         return;
     }
-    emit mouseSpeedChanged();
 }
 
 bool MouseConfigManager::enhancePointerPrecision() const {
@@ -61,9 +57,7 @@ void MouseConfigManager::setEnhancePointerPrecision(bool enabled) {
     bool current = enhancePointerPrecision();
     if(enabled == current) return;
     
-    if(updateSystemParameter(SPI_SETMOUSE, enabled)) {
-        emit enhancePointerPrecisionChanged();
-    }
+    updateSystemParameter(SPI_SETMOUSE, enabled);
 }
 
 bool MouseConfigManager::updateSystemParameter(UINT uiAction, int value) const {

@@ -38,6 +38,5 @@ bool RegistryOperator::setWin32PrioritySeparation(DWORD value) {
     }
 
     RegCloseKey(hKey);
-    emit win32PrioritySeparationChanged();
     return true;
 }

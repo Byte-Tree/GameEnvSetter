@@ -2,6 +2,11 @@
 
 #include <QObject>
 
+// NVIDIA 设置ID常量
+extern const unsigned int NV_IMAGE_SHARPENING_SETTING_ID;
+extern const unsigned int NV_CUDA_EXCLUDED_GPUS_SETTING_ID;
+extern const unsigned int NV_MEMORY_FALLBACK_POLICY_SETTING_ID;
+
 class GraphicsConfigManager : public QObject {
     Q_OBJECT
     Q_PROPERTY(bool imageSharpening READ getImageSharpeningStatus WRITE setImageSharpening NOTIFY imageSharpeningChanged)
@@ -9,8 +14,8 @@ class GraphicsConfigManager : public QObject {
 
 public:
     // 图形增强功能
-    bool getImageSharpeningStatus();
-    void setImageSharpening(bool enabled);
+    Q_INVOKABLE bool getImageSharpeningStatus();
+    Q_INVOKABLE void setImageSharpening(bool enabled);
     
     // CUDA GPU多选功能
     QStringList getAvailableGPUs();

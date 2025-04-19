@@ -16,9 +16,7 @@ void KeyboardConfigManager::setRepeatDelay(int delay) {
         emit errorOccurred(tr("重复延迟需在0-3之间"));
         return;
     }
-    if(SystemParametersInfo(SPI_SETKEYBOARDDELAY, static_cast<UINT>(delay), nullptr, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE)) {
-        emit repeatDelayChanged();
-    } else {
+    if(!SystemParametersInfo(SPI_SETKEYBOARDDELAY, static_cast<UINT>(delay), nullptr, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE)) {
         emit errorOccurred(tr("设置键盘延迟失败"));
     }
 }
@@ -39,9 +37,7 @@ void KeyboardConfigManager::setRepeatRate(int rate) {
         emit errorOccurred(tr("重复速度需在0-31之间"));
         return;
     }
-    if(SystemParametersInfo(SPI_SETKEYBOARDSPEED, static_cast<UINT>(rate), nullptr, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE)) {
-        emit repeatRateChanged();
-    } else {
+    if(!SystemParametersInfo(SPI_SETKEYBOARDSPEED, static_cast<UINT>(rate), nullptr, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE)) {
         emit errorOccurred(tr("设置键盘速度失败"));
     }
 }
