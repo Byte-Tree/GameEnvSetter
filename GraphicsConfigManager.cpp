@@ -10,6 +10,38 @@ typedef int NVAPI_STATUS; // 添加NVAPI_STATUS类型定义
 #define NVAPI_SHORT_STRING_LENGTH 64
 #define NVAPI_BINARY_DATA_MAX_SIZE 4096
 
+// 静态成员初始化
+bool GraphicsConfigManager::isNvAPIInitialized = false;
+NvDRSSessionHandle GraphicsConfigManager::globalSession = 0;
+
+bool GraphicsConfigManager::initializeNvAPI()
+{
+    if (!isNvAPIInitialized) {
+        NVAPI_STATUS status = NvAPI_Initialize();
+        if (status != NVAPI_OK) {
+            qWarning() << "NvAPI_Initialize failed with error:" << status;
+            return false;
+        }
+        status = NvAPI_DRS_CreateSession(&globalSession);
+        if (status != NVAPI_OK) {
+            qWarning() << "NvAPI_DRS_CreateSession failed with error:" << status;
+            NvAPI_Unload();
+            return false;
+        }
+        isNvAPIInitialized = true;
+    }
+    return true;
+}
+
+void GraphicsConfigManager::shutdownNvAPI()
+{
+    if (isNvAPIInitialized) {
+        NvAPI_DRS_DestroySession(globalSession);
+        NvAPI_Unload();
+        isNvAPIInitialized = false;
+    }
+}
+
 bool GraphicsConfigManager::getImageSharpeningStatus() {
     NVDRS_SETTING setting = queryNvidiaSetting(NV_QUALITY_UPSCALING_STRING);
     return setting.u32CurrentValue != 0;
@@ -17,57 +49,71 @@ bool GraphicsConfigManager::getImageSharpeningStatus() {
 
 // 新增的通用查询方法
 NVDRS_SETTING GraphicsConfigManager::queryNvidiaSetting(const wchar_t* settingName) {
-    NvDRSSessionHandle hSession = 0;
-    NvDRSProfileHandle hProfile = 0;
     NVDRS_SETTING setting = {0};
     setting.version = NVDRS_SETTING_VER;
 
-    NVAPI_STATUS status = NvAPI_Initialize();
-    if (status != NVAPI_OK) {
-        qWarning() << "NvAPI_Initialize failed with error:" << status;
+    if (!initializeNvAPI()) {
         return setting;
     }
 
-    status = NvAPI_DRS_CreateSession(&hSession);
-    if (status != NVAPI_OK) {
-        qWarning() << "NvAPI_DRS_CreateSession failed with error:" << status;
-        NvAPI_Unload();
-        return setting;
-    }
-
-    status = NvAPI_DRS_LoadSettings(hSession);
+    // 加载最新配置（确保数据同步）
+    NVAPI_STATUS status = NvAPI_DRS_LoadSettings(globalSession);
+    qDebug() << "配置加载状态:" << status << "会话句柄:" << globalSession;
     if (status != NVAPI_OK) {
         qWarning() << "NvAPI_DRS_LoadSettings failed with error:" << status;
-        NvAPI_DRS_DestroySession(hSession);
-        NvAPI_Unload();
         return setting;
     }
 
-    status = NvAPI_DRS_GetBaseProfile(hSession, &hProfile);
+    // 优先尝试当前全局配置（而非仅基础配置）
+    NvDRSProfileHandle hProfile = 0;
+    status = NvAPI_DRS_GetCurrentGlobalProfile(globalSession, &hProfile);
+    qDebug() << "当前全局配置文件句柄:" << hProfile << "状态码:" << status;
     if (status != NVAPI_OK) {
-        qWarning() << "NvAPI_DRS_GetBaseProfile failed with error:" << status;
-        NvAPI_DRS_DestroySession(hSession);
-        NvAPI_Unload();
+        qWarning() << "NvAPI_DRS_GetCurrentGlobalProfile failed with error:" << status;
         return setting;
     }
 
+    // 安全处理宽字符字符串
+    std::wstring wideName(settingName);
     NvU32 settingId = 0;
-    QString qstr = QString::fromWCharArray(settingName);
-    status = NvAPI_DRS_GetSettingIdFromName((NvU16*)qstr.utf16(), &settingId);
+
+    status = NvAPI_DRS_GetSettingIdFromName(
+        reinterpret_cast<NvU16*>(const_cast<wchar_t*>(wideName.c_str())),
+        &settingId
+        );
+    qDebug() << "设置项名称转ID结果 - 名称:" << QString::fromWCharArray(settingName) << "ID:" << settingId << "状态码:" << status;
     if (status != NVAPI_OK) {
         qWarning() << "Failed to get setting ID for " << settingName;
-        NvAPI_DRS_DestroySession(hSession);
-        NvAPI_Unload();
         return setting;
     }
 
-    status = NvAPI_DRS_GetSetting(hSession, hProfile, settingId, &setting);
+    // 反向验证设置ID有效性
+    NvAPI_UnicodeString settingNameVerify = {0};
+    if (NvAPI_DRS_GetSettingNameFromId(settingId, &settingNameVerify) != NVAPI_OK) {
+        qWarning() << "无效的设置ID:" << settingId << "名称:" << QString::fromWCharArray(settingName);
+        return setting;
+    }
+
+    // 查询设置
+    qDebug() << "正在查询设置项 ID:" << settingId << "名称:" << QString::fromWCharArray(settingName);
+
+    // 验证设置项存在于当前配置
+    auto list = getAllNvidiaSettings();
+    QString qstr_settingName = QString::fromWCharArray(settingName);
+    for(auto e : list)
+    {
+        if(qstr_settingName.compare(e.first) == 0)
+        {
+            qDebug()<<"在"<<list.size()<<"个可设置项中"<<"找到设置项："<<e;
+            break;
+        }
+    }
+    status = NvAPI_DRS_GetSetting(globalSession, hProfile, settingId, &setting);
+    qDebug() << "NvAPI_DRS_GetSetting返回状态:" << status << "配置文件句柄:" << hProfile;
     if (status != NVAPI_OK) {
         qWarning() << "NvAPI_DRS_GetSetting failed with error:" << status;
     }
 
-    NvAPI_DRS_DestroySession(hSession);
-    NvAPI_Unload();
     return setting;
 }
 
@@ -363,5 +409,49 @@ void GraphicsConfigManager::setMemoryFallbackPolicy(MemoryFallbackPolicy policy)
     NvAPI_Unload();
     
     emit memoryFallbackPolicyChanged();
+}
+
+
+QList<QPair<QString, NvU32>> GraphicsConfigManager::getAllNvidiaSettings() {
+    QList<QPair<QString, NvU32>> settingsList;
+
+    if (!initializeNvAPI()) {
+        qWarning() << "NVIDIA API 初始化失败";
+        return settingsList;
+    }
+
+    NvU32 settingCount = 0;
+    NVAPI_STATUS status = NvAPI_DRS_EnumAvailableSettingIds(nullptr,&settingCount);
+    if (status != NVAPI_OK || settingCount == 0) {
+        qWarning() << "无法获取设置项数量，错误码:" << status;
+        return settingsList;
+    }
+
+    NvU32* settingIds = new NvU32[settingCount];
+    status = NvAPI_DRS_EnumAvailableSettingIds(settingIds,&settingCount);
+    if (status != NVAPI_OK) {
+        qWarning() << "无法枚举设置项ID，错误码:" << status;
+        delete[] settingIds;
+        return settingsList;
+    }
+
+    for (NvU32 i = 0; i < settingCount; ++i) {
+        NvAPI_UnicodeString  settingName = {0};
+        status = NvAPI_DRS_GetSettingNameFromId(settingIds[i], &settingName);
+        if (status == NVAPI_OK) {
+            QString name = QString::fromWCharArray(reinterpret_cast<wchar_t*>(settingName));
+            settingsList.append(qMakePair(name, settingIds[i]));
+        } else {
+            qWarning() << "无法获取设置名称，ID:" << settingIds[i] << "错误码:" << status;
+        }
+    }
+
+    delete[] settingIds;
+
+    // for(auto e : settingsList)
+    // {
+    //     qDebug()<<e<<Qt::endl;
+    // }
+    return settingsList;
 }
 

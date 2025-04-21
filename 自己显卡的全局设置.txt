@@ -1,0 +1,204 @@
+std::pair("Antialiasing - Line gamma", 545898348) 
+
+std::pair("OpenGL GDI compatibility", 544392611) 
+
+std::pair("Vulkan/OpenGL present method", 550932728) 
+
+std::pair("Deep color for 3D applications", 546816758) 
+
+std::pair("OpenGL default swap interval", 543843714) 
+
+std::pair("OpenGL default swap interval fraction", 543966593) 
+
+std::pair("OpenGL default swap interval sign", 543513850) 
+
+std::pair("Event Log Severity Threshold", 547222078) 
+
+std::pair("Extension String version", 553612435) 
+
+std::pair("Buffer-flipping mode", 538927519) 
+
+std::pair("Force Stereo shuttering", 541956620) 
+
+std::pair("Maximum frames allowed", 546199011) 
+
+std::pair("Exported Overlay pixel types", 547022447) 
+
+std::pair("Enable overlay", 543959236) 
+
+std::pair("High level control of the rendering quality on OpenGL", 544832876) 
+
+std::pair("Unified back/depth buffer", 547524693) 
+
+std::pair("Enable NV_gpu_multicast extension", 546493374) 
+
+std::pair("Threaded optimization", 549528094) 
+
+std::pair("Event Log Tmon Severity Threshold", 539527361) 
+
+std::pair("Triple buffering", 553505273) 
+
+std::pair("Antialiasing - Behavior Flags", 283958146) 
+
+std::pair("Antialiasing - Transparency Multisampling", 284962204) 
+
+std::pair("Antialiasing - Gamma correction", 276652957) 
+
+std::pair("Antialiasing - Setting", 282555346) 
+
+std::pair("Antialiasing - Transparency Supersampling", 282364549) 
+
+std::pair("Antialiasing - Mode", 276757595) 
+
+std::pair("Antialiasing - SLI AA", 276495451) 
+
+std::pair("Anisotropic filtering setting", 270426537) 
+
+std::pair("Anisotropic filtering mode", 282245910) 
+
+std::pair("NVIDIA Predefined Ansel Usage", 271965065) 
+
+std::pair("Ansel flags for enabled applications", 277207690) 
+
+std::pair("Enable Ansel", 276158834) 
+
+std::pair("Idle Application Max FPS Limit", 277041174) 
+
+std::pair("Idle Application Threshold Time out in seconds", 277041175) 
+
+std::pair("Application Profile Notification Popup Timeout", 272979126) 
+
+std::pair("Steam Application ID", 276618684) 
+
+std::pair("Battery Boost Application FPS", 269573260) 
+
+std::pair("Do not display this profile in the Control Panel", 275602687) 
+
+std::pair("Export Performance Counters", 277809217) 
+
+std::pair("External Quiet Mode (XQM)", 269573261) 
+
+std::pair("Frame Rate Limiter", 277041154) 
+
+std::pair("NVIDIA Predefined FXAA Usage", 271895433) 
+
+std::pair("Enable FXAA", 276089202) 
+
+std::pair("Enable FXAA Indicator", 275315612) 
+
+std::pair("Autoalign flash indicator", 278262128) 
+
+std::pair("SLI indicator", 271085649) 
+
+std::pair("NVIDIA Quality upscaling", 272909380) 
+
+std::pair("Maximum AA samples allowed for a given application", 284810371) 
+
+std::pair("Display the PhysX indicator", 278196591) 
+
+std::pair("Power management mode", 274197361) 
+
+std::pair("No override of Anisotropic filtering", 272354485) 
+
+std::pair("Maximum resolution allowed for a given application", 284810370) 
+
+std::pair("Optimus flags for enabled applications", 284810368) 
+
+std::pair("Enable application for Optimus", 284810369) 
+
+std::pair("Shim Rendering Mode Options per application for Optimus", 284810372) 
+
+std::pair("Number of GPUs to use on SLI rendering mode", 271834321) 
+
+std::pair("NVIDIA predefined number of GPUs to use on SLI rendering mode", 271834322) 
+
+std::pair("NVIDIA predefined number of GPUs to use on SLI rendering mode on DirectX 10", 271834323) 
+
+std::pair("NVIDIA predefined SLI mode", 271830721) 
+
+std::pair("NVIDIA predefined SLI mode on DirectX 10", 271830722) 
+
+std::pair("SLI rendering mode", 271830737) 
+
+std::pair("Virtual Reality pre-rendered frames", 269553971) 
+
+std::pair("Toggle the VRR global feature", 278196567) 
+
+std::pair("Display the VRR Overlay Indicator", 278262127) 
+
+std::pair("VRR requested state", 278196727) 
+
+std::pair("G-SYNC", 279476687) 
+
+std::pair("G-SYNC", 279476652) 
+
+std::pair("Enable G-SYNC globally", 294973784) 
+
+std::pair("Flag to control smooth AFR behavior", 270198627) 
+
+std::pair("Variable refresh Rate", 279476686) 
+
+std::pair("Vsync - Behavior Flags", 285076515) 
+
+std::pair("Stereo - Swap eyes", 296633180) 
+
+std::pair("Stereo - Display mode", 300489313) 
+
+std::pair("Stereo - Dongle Support", 287609789) 
+
+std::pair("Stereo - Enable", 296394393) 
+
+std::pair("Stereo - swap mode", 288568115) 
+
+std::pair("Ambient Occlusion", 6714153) 
+
+std::pair("NVIDIA Predefined Ambient Occlusion Usage", 6701881) 
+
+std::pair("Texture filtering - Driver Controlled LOD Bias", 6524559) 
+
+std::pair("Export Performance Counters for DX9 only", 11951730) 
+
+std::pair("Texture filtering - LOD Bias", 7573135) 
+
+std::pair("Enable sample interleaving (MFAA)", 10011052) 
+
+std::pair("Maximum pre-rendered frames", 8102046) 
+
+std::pair("Shader Cache", 1675263) 
+
+std::pair("Shader disk cache maximum size", 11306135) 
+
+std::pair("Texture filtering - Anisotropic sample optimization", 15151633) 
+
+std::pair("Texture filtering - Anisotropic filter optimization", 8703344) 
+
+std::pair("Texture filtering - Trilinear optimization", 3066610) 
+
+std::pair("Texture filtering - Negative LOD bias", 1686376) 
+
+std::pair("Texture filtering - Quality", 13510289) 
+
+std::pair("Texture filtering - Quality Substitution", 13510290) 
+
+std::pair("Preferred refresh rate", 6600001) 
+
+std::pair("PowerThrottle", 11434076) 
+
+std::pair("VAB Default Data", 11241095) 
+
+std::pair("Vertical Sync", 11041231) 
+
+std::pair("Vertical Sync Tear Control", 5912412) 
+
+std::pair("Preferred OpenGL GPU", 550564838) 
+
+std::pair("List of Universal GPU ids", 271929336) 
+
+std::pair("Maximum GPU Power", 282193705) 
+
+std::pair("Exceptions to blocking apps", 273402273) 
+
+std::pair("ICafe Settings", 14357303) 
+
+std::pair("shader cache path to dll", 1679362) 
+
