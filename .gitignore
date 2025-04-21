@@ -80,3 +80,4 @@ CMakeLists.txt.user*
 .rcc/
 .uic/
 /build*/
+/R560-developer

@@ -53,10 +53,10 @@ set_target_properties(appGameEnvSetter PROPERTIES
 
 target_link_libraries(appGameEnvSetter
     PRIVATE Qt6::Quick
-    PRIVATE "D:/myprojects/R560-developer/amd64/nvapi64.lib"
+    PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/R560-developer/amd64/nvapi64.lib"
 )
 
-include_directories("D:/myprojects/R560-developer")
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/R560-developer")
 
 include(GNUInstallDirs)
 install(TARGETS appGameEnvSetter

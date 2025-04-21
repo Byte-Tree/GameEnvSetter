@@ -1,16 +1,16 @@
 #pragma once
 
 #include <QObject>
-
-// NVIDIA 设置ID常量
-extern const unsigned int NV_IMAGE_SHARPENING_SETTING_ID;
-extern const unsigned int NV_CUDA_EXCLUDED_GPUS_SETTING_ID;
-extern const unsigned int NV_MEMORY_FALLBACK_POLICY_SETTING_ID;
+#include "nvapi.h"
 
 class GraphicsConfigManager : public QObject {
     Q_OBJECT
     Q_PROPERTY(bool imageSharpening READ getImageSharpeningStatus WRITE setImageSharpening NOTIFY imageSharpeningChanged)
+    Q_PROPERTY(int vSyncMode READ getVSyncMode WRITE setVSyncMode NOTIFY vSyncModeChanged)
     Q_PROPERTY(MemoryFallbackPolicy memoryFallbackPolicy READ getMemoryFallbackPolicy WRITE setMemoryFallbackPolicy NOTIFY memoryFallbackPolicyChanged)
+
+private:
+    NVDRS_SETTING queryNvidiaSetting(const wchar_t* settingName);
 
 public:
     // 图形增强功能
@@ -30,10 +30,13 @@ public:
     };
     
     MemoryFallbackPolicy getMemoryFallbackPolicy();
+    Q_INVOKABLE int getVSyncMode();
+    Q_INVOKABLE void setVSyncMode(int mode);
     Q_INVOKABLE void setMemoryFallbackPolicy(MemoryFallbackPolicy policy);
 
 
 signals:
     void imageSharpeningChanged();
     void memoryFallbackPolicyChanged();
+    void vSyncModeChanged();
 };

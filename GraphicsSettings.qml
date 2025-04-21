@@ -48,7 +48,7 @@ GroupBox {
                             RowLayout { Label { text: "低延时模式" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "提高画面反馈速度（中低端显卡可能帧数波动）。" } ComboBox { model: [] } }
                             RowLayout { Label { text: "各向异性过滤" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "提升远处物体清晰度（显卡性能越高可设置越高）。" } ComboBox { model: [] } }
                             RowLayout { Label { text: "后台应用程序最大帧速率" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "省电节能。" } ComboBox { model: [] } }
-                            RowLayout { Label { text: "垂直同步" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "同步GPU渲染速率与显示器刷新率（适合看风景）。" } ComboBox { model: [] } }
+                            RowLayout { Label { text: "垂直同步" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "同步GPU渲染速率与显示器刷新率（适合看风景）。" } ComboBox { model: ["关", "开"]; currentIndex: graphicsConfig.getVSyncMode(); onActivated: function(index) { graphicsConfig.setVSyncMode(index) } } }
                             RowLayout { Label { text: "多重采样" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "提升画面细腻度（3060以下显卡建议关闭）。" } ComboBox { model: [] } }
                             RowLayout { Label { text: "平滑处理 - FXAA" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "消除物体边缘锯齿。" } ComboBox { model: [] } }
                             RowLayout { Label { text: "平滑处理 - 模式" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "抗锯齿模式选择。" } ComboBox { model: [] } }
