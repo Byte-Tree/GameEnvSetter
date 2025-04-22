@@ -28,7 +28,7 @@ GroupBox {
                 }
                 Text {
                     text: valueDisplay
-                    property string valueDisplay: value + "档 (" + (250 * (value + 1)) + "ms)"
+                    property string valueDisplay: keyboardConfig.repeatDelay + "档 (" + (250 * (keyboardConfig.repeatDelay + 1)) + "ms)"
                 }
             }
         }
@@ -53,7 +53,7 @@ GroupBox {
                 }
                 Text {
                     text: valueDisplay
-                    property string valueDisplay: value + "档 (" + (2.5 + (value * (30.0 - 2.5) / 31.0)).toFixed(1) + "cps)"
+                    property string valueDisplay: keyboardConfig.repeatRate + "档 (" + (2.5 + (keyboardConfig.repeatRate * (30.0 - 2.5) / 31.0)).toFixed(1) + "cps)"
                 }
             }
         }

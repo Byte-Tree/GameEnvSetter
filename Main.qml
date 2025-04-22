@@ -13,6 +13,7 @@ ApplicationWindow {
     property bool firstRun: false
     property bool configSaved: false
 
+    //给后端类在qml声明,注册在main.cpp里面
     MouseConfigManager { id: mouseConfig }
     KeyboardConfigManager { id: keyboardConfig }
     RegistryOperator { id: registryOperator }
@@ -100,6 +101,11 @@ ApplicationWindow {
     Connections {
         target: registryOperator
         function onRegistryErrorOccurred(msg) { toolTip.show(msg, 2000) }
+    }
+
+    Connections {
+        target: graphicsConfig
+        function onErrorOccurred(msg) { toolTip.show(msg, 2000) }
     }
 
     Dialog {
