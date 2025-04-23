@@ -6,7 +6,7 @@
 
 class GraphicsConfigManager : public QObject {
     Q_OBJECT
-    Q_PROPERTY(bool imageSharpening READ getImageSharpeningStatus WRITE setImageSharpening NOTIFY imageSharpeningChanged)
+    Q_PROPERTY(int imageSharpening READ getImageSharpeningStatus WRITE setImageSharpening NOTIFY imageSharpeningChanged)
     Q_PROPERTY(int vSyncMode READ getVSyncMode WRITE setVSyncMode NOTIFY vSyncModeChanged)
     Q_PROPERTY(int powerManagementMode READ getPowerManagementMode WRITE setPowerManagementMode NOTIFY powerManagementModeChanged)
     Q_PROPERTY(int openGLGDICompatibility READ getOpenGLGDICompatibility WRITE setOpenGLGDICompatibility NOTIFY openGLGDICompatibilityChanged)
@@ -15,9 +15,11 @@ class GraphicsConfigManager : public QObject {
     Q_PROPERTY(int appIdleFPSLimit READ getAppIdleFPSLimit WRITE setAppIdleFPSLimit NOTIFY appIdleFPSLimitChanged)
     Q_PROPERTY(int anisotropicFiltering READ getAnisotropicFiltering WRITE setAnisotropicFiltering NOTIFY anisotropicFilteringChanged)
     Q_PROPERTY(int aaModeMethod READ getAAModeMethod WRITE setAAModeMethod NOTIFY aaModeMethodChanged)
-    Q_PROPERTY(bool fxaaEnable READ getFXAAEnable WRITE setFXAAEnable NOTIFY fxaaEnableChanged)
+    Q_PROPERTY(int aaModeSelector READ getAAModeSelector WRITE setAAModeSelector NOTIFY aaModeSelectorChanged)
+    Q_PROPERTY(int fxaaEnable READ getFXAAEnable WRITE setFXAAEnable NOTIFY fxaaEnableChanged)
     Q_PROPERTY(int aaGammaCorrection READ getAAGammaCorrection WRITE setAAGammaCorrection NOTIFY aaGammaCorrectionChanged)
     Q_PROPERTY(int aaTransparency READ getAATransparency WRITE setAATransparency NOTIFY aaTransparencyChanged)
+    Q_PROPERTY(int lowLatencyMode READ getLowLatencyMode WRITE setLowLatencyMode NOTIFY lowLatencyModeChanged)
 private:
     static bool isNvAPIInitialized;
     static NvDRSSessionHandle globalSession;
@@ -29,7 +31,7 @@ public:
     //通过设置名称找设置名称对应的ID，或者直接看头文件就不用这个函数了
     static NvU32 getSettingId(const wchar_t* settingName);
     //获取所有可用的显卡设置
-    QList<QPair<QString, NvU32>> getAllNvidiaSettings();
+    QList<QPair<QString, QPair<NvU32, NvU32>>> getAllNvidiaSettings();
 public:
     static bool initializeNvAPI();
     static void shutdownNvAPI();
@@ -71,8 +73,8 @@ public:
     Q_INVOKABLE void setAAModeMethod(int mode);
 
     // FXAA 启用设置
-    Q_INVOKABLE bool getFXAAEnable();
-    Q_INVOKABLE void setFXAAEnable(bool enable);
+    Q_INVOKABLE int getFXAAEnable();
+    Q_INVOKABLE void setFXAAEnable(int index);
 
     // 抗锯齿伽马校正设置
     Q_INVOKABLE int getAAGammaCorrection();
@@ -82,6 +84,13 @@ public:
     Q_INVOKABLE int getAATransparency();
     Q_INVOKABLE void setAATransparency(int level);
     
+    // 抗锯齿模式选择器设置
+    Q_INVOKABLE int getAAModeSelector();
+    Q_INVOKABLE void setAAModeSelector(int level);
+
+    // 低延迟模式设置
+    Q_INVOKABLE int getLowLatencyMode();
+    Q_INVOKABLE void setLowLatencyMode(int mode);
 signals:
     void errorOccurred(const QString& msg);
     void imageSharpeningChanged();
@@ -97,4 +106,6 @@ signals:
     void fxaaEnableChanged();
     void aaGammaCorrectionChanged();
     void aaTransparencyChanged();
+    void aaModeSelectorChanged();
+    void lowLatencyModeChanged();
 };
