@@ -19,6 +19,7 @@ void MouseConfigManager::setDoubleClickSpeed(int ms) {
         // 恢复原值
         SystemParametersInfo(SPI_SETDOUBLECLICKTIME, current, nullptr, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
     }
+    emit doubleClickSpeedChanged();
 }
 
 int MouseConfigManager::mouseSpeed() const {
@@ -42,6 +43,7 @@ void MouseConfigManager::setMouseSpeed(int speed) {
         }
         return;
     }
+    emit mouseSpeedChanged();
 }
 
 bool MouseConfigManager::enhancePointerPrecision() const {
@@ -58,6 +60,7 @@ void MouseConfigManager::setEnhancePointerPrecision(bool enabled) {
     if(enabled == current) return;
     
     updateSystemParameter(SPI_SETMOUSE, enabled);
+    emit enhancePointerPrecisionChanged();
 }
 
 bool MouseConfigManager::updateSystemParameter(UINT uiAction, int value) const {

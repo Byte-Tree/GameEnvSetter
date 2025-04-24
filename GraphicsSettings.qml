@@ -40,9 +40,9 @@ GroupBox {
                             RowLayout { Label { text: "图形增强" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "用AI提高帧数（适合看风景，但会加剧远处模糊感）。" }
                                 ComboBox { model: ["未知","关", "开"];
                                     currentIndex: graphicsConfig.imageSharpening; onActivated: function(index) { graphicsConfig.setImageSharpening(index) } } }
-                            //RowLayout { Label { text: "CUDA - GPUs" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "多显卡默认配置。" } ComboBox { model: graphicsConfig.availableGPUs; currentIndex: -1; onActivated: graphicsConfig.setSelectedGPUs([model[index]]) } }
-                            //RowLayout { Label { text: "CUDA - 系统内存回退政策" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "显存不足时使用内存补充。" } ComboBox { model: ["驱动默认值", "偏好无系统内存回退", "偏好系统内存回退"]; currentIndex: graphicsConfig.memoryFallbackPolicy; onActivated: graphicsConfig.setMemoryFallbackPolicy(index) } }
-                            RowLayout { Label { text: "DSR - 因数" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "伪分辨率技术（适合看风景）。" } ComboBox { model: [] } }
+                            RowLayout { Label { text: "CUDA - GPUs" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "多显卡默认配置。" } ComboBox { enabled: false; } }
+                            RowLayout { Label { text: "CUDA - 系统内存回退政策" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "显存不足时使用内存补充。" } ComboBox { enabled: false; model: ["驱动默认值", "偏好无系统内存回退", "偏好系统内存回退"]; } }
+                            RowLayout { Label { text: "DSR - 因数" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "伪分辨率技术（适合看风景）。" } ComboBox { enabled: false; model: [] } }
                             RowLayout { Label { text: "OpenGL GDI兼容性" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "对老旧游戏的优化。" }
                                 ComboBox { model: ["未知","优先性能","优先兼容性","自动"];
                                     currentIndex: graphicsConfig.openGLGDICompatibility; onActivated: function(index) { graphicsConfig.setOpenGLGDICompatibility(index) } } }
@@ -73,6 +73,7 @@ GroupBox {
                                     ToolTip.text: "限制后台程序帧率节省资源（0表示关闭限制）"
                                 }
                                 Slider {
+                                    id:idleFpsSlider
                                     from: 0
                                     to: 1023
                                     stepSize: 1
@@ -81,7 +82,7 @@ GroupBox {
                                     Layout.fillWidth: true
                                 }
                                 Text {
-                                    text: "当前值：" + graphicsConfig.appIdleFPSLimit
+                                    text: "当前值：" + idleFpsSlider.value
                                     Layout.alignment: Qt.AlignRight
                                 }
                             }
@@ -125,17 +126,78 @@ GroupBox {
                                 currentIndex: graphicsConfig.aaTransparency
                                 onActivated: function(index) {graphicsConfig.setAATransparency(index)}
                                 } }
-                            RowLayout { Label { text: "最大帧速率" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "限制最大FPS。" } ComboBox { model: [] } }
-                            RowLayout { Label { text: "环境光吸收" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "优化画面光影效果。" } ComboBox { model: [] } }
+                            RowLayout { 
+                                Label { text: "最大帧速率" }
+                                Button {
+                                    text: "?"
+                                    ToolTip.visible: hovered
+                                    ToolTip.text: "限制最大FPS（0表示关闭限制）"
+                                }
+                                Slider {
+                                    id:maxFpsSlider
+                                    from: 0
+                                    to: 1023
+                                    stepSize: 1
+                                    value: graphicsConfig.maxFPSLimit
+                                    onMoved: graphicsConfig.setMaxFPSLimit(value)
+                                    Layout.fillWidth: true
+                                }
+                                Text {
+                                    text: "当前值：" + maxFpsSlider.value
+                                    Layout.alignment: Qt.AlignRight
+                                }
+                            }
+                            RowLayout { Label { text: "环境光吸收" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "优化画面光影效果。" }
+                                ComboBox { 
+                                    model: ["关","性能(低)","质量(中)","高"]
+                                    currentIndex: graphicsConfig.aoMode
+                                    onActivated: graphicsConfig.setAoMode(index)
+                                } }
                             RowLayout { Label { text: "电源管理模式" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "控制显卡功耗策略（游戏推荐最大性能）。" } 
                                 ComboBox { model: ["未知","自适应","最大性能","驱动控制","一致性能","最小功耗","最优电源"];
                                     currentIndex: graphicsConfig.powerManagementMode; onActivated: function(index) { graphicsConfig.setPowerManagementMode(index) } }}
-                            RowLayout { Label { text: "着色器缓存大小" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "显存足够时可设为无限制。" } ComboBox { model: [] } }
-                            RowLayout { Label { text: "纹理过滤 - 三线性优化" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "动态降低远处清晰度。" } ComboBox { model: [] } }
-                            RowLayout { Label { text: "纹理过滤 - 各向异性采样优化" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "动态降低被遮挡物清晰度（可能停止绘制进程）。" } ComboBox { model: [] } }
-                            RowLayout { Label { text: "纹理过滤 - 负LOD偏移" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "是否动态调节细节物体清晰度。" } ComboBox { model: [] } }
-                            RowLayout { Label { text: "纹理过滤 - 质量" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "画质与帧数平衡（质量：画质+10%；高性能：帧数+20%）。" } ComboBox { model: [] } }
-                            RowLayout { Label { text: "线程优化" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "优化多核CPU性能。" } ComboBox { model: [] } }
+                            RowLayout { 
+                                Label { text: "着色器缓存大小" }
+                                Button { 
+                                    text: "?"
+                                    ToolTip.visible: hovered
+                                    ToolTip.text: "显存足够时可设为无限制(即：4,294,967,295)。"
+                                }
+                                Text {
+                                    text: "当前值：" + graphicsConfig.shaderCacheSize + "MB"
+                                    Layout.alignment: Qt.AlignRight
+                                }
+                                TextField {
+                                    placeholderText: "例如：4096 单位：MB"
+                                    Layout.fillWidth: true
+                                }
+                                Button {
+                                    text: "设置"
+                                    onClicked: graphicsConfig.setShaderCacheSize(parent.children[3].text)
+                                }
+                            }
+                            RowLayout { Label { text: "纹理过滤 - 三线性优化" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "动态降低远处清晰度。" }
+                                ComboBox { model: ["开","关"]
+                                    currentIndex: graphicsConfig.trilinearOptimization
+                                    onActivated: function(index) { graphicsConfig.setTrilinearOptimization(index) } } }
+                            RowLayout { Label { text: "纹理过滤 - 各向异性采样优化" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "动态降低被遮挡物清晰度（可能停止绘制进程）。" } 
+                                ComboBox { model: ["关","开"]
+                                    currentIndex: graphicsConfig.anisotropicSampleOptimization
+                                    onActivated: function(index) { graphicsConfig.setAnisotropicSampleOptimization(index) }
+                                } }
+                            RowLayout { Label { text: "纹理过滤 - 负LOD偏移" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "是否动态调节细节物体清晰度。" } ComboBox {
+                                    model: ["允许","锁定"]; currentIndex: graphicsConfig.negativeLODBias; onActivated: function(index) { graphicsConfig.setNegativeLODBias(index) } } }
+                            RowLayout { Label { text: "纹理过滤 - 质量" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "画质与帧数平衡（质量：画质+10%；高性能：帧数+20%）。" } 
+                                ComboBox { 
+                                    model: ["高质量", "质量", "性能", "高性能"]
+                                    currentIndex: graphicsConfig.textureFilterQuality
+                                    onActivated: function(index) { graphicsConfig.setTextureFilterQuality(index) }
+                                } }
+                            RowLayout { Label { text: "线程优化" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "优化多核CPU性能。" } ComboBox { 
+                                model: ["自动", "开", "关"];
+                                currentIndex: graphicsConfig.threadControl;
+                                onActivated: function(index) { graphicsConfig.setThreadControl(index) }
+                            } }
                         }
                     }
                     

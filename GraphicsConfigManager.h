@@ -17,9 +17,18 @@ class GraphicsConfigManager : public QObject {
     Q_PROPERTY(int aaModeMethod READ getAAModeMethod WRITE setAAModeMethod NOTIFY aaModeMethodChanged)
     Q_PROPERTY(int aaModeSelector READ getAAModeSelector WRITE setAAModeSelector NOTIFY aaModeSelectorChanged)
     Q_PROPERTY(int fxaaEnable READ getFXAAEnable WRITE setFXAAEnable NOTIFY fxaaEnableChanged)
+    Q_PROPERTY(int aoMode READ getAoMode WRITE setAoMode NOTIFY aoModeChanged)
     Q_PROPERTY(int aaGammaCorrection READ getAAGammaCorrection WRITE setAAGammaCorrection NOTIFY aaGammaCorrectionChanged)
     Q_PROPERTY(int aaTransparency READ getAATransparency WRITE setAATransparency NOTIFY aaTransparencyChanged)
     Q_PROPERTY(int lowLatencyMode READ getLowLatencyMode WRITE setLowLatencyMode NOTIFY lowLatencyModeChanged)
+    Q_PROPERTY(int maxFPSLimit READ getMaxFPSLimit WRITE setMaxFPSLimit NOTIFY maxFPSLimitChanged)
+    Q_PROPERTY(int shaderCacheSize READ getShaderCacheSize WRITE setShaderCacheSize NOTIFY shaderCacheSizeChanged)
+    Q_PROPERTY(int trilinearOptimization READ getTrilinearOptimization WRITE setTrilinearOptimization NOTIFY trilinearOptimizationChanged)
+    Q_PROPERTY(int anisotropicSampleOptimization READ getAnisotropicSampleOptimization WRITE setAnisotropicSampleOptimization NOTIFY anisotropicSampleOptimizationChanged)
+    Q_PROPERTY(int negativeLODBias READ getNegativeLODBias WRITE setNegativeLODBias NOTIFY negativeLODBiasChanged)
+    Q_PROPERTY(int textureFilterQuality READ getTextureFilterQuality WRITE setTextureFilterQuality NOTIFY textureFilterQualityChanged)
+    Q_PROPERTY(int threadControl READ getThreadControl WRITE setThreadControl NOTIFY threadControlChanged)
+    
 private:
     static bool isNvAPIInitialized;
     static NvDRSSessionHandle globalSession;
@@ -91,6 +100,39 @@ public:
     // 低延迟模式设置
     Q_INVOKABLE int getLowLatencyMode();
     Q_INVOKABLE void setLowLatencyMode(int mode);
+
+    // 最大 FPS 限制设置
+    Q_INVOKABLE int getMaxFPSLimit();
+    Q_INVOKABLE void setMaxFPSLimit(int limit);
+
+    //环境光吸收
+    Q_INVOKABLE int getAoMode();
+    Q_INVOKABLE void setAoMode(int mode);
+
+    // 着色器缓存大小设置
+    Q_INVOKABLE int getShaderCacheSize();
+    Q_INVOKABLE void setShaderCacheSize(int size);
+
+    // 三线性优化设置
+    Q_INVOKABLE int getTrilinearOptimization();
+    Q_INVOKABLE void setTrilinearOptimization(int mode);
+    
+    // 各向异性采样优化设置
+    Q_INVOKABLE int getAnisotropicSampleOptimization();
+    Q_INVOKABLE void setAnisotropicSampleOptimization(int mode);
+
+    //负LOD偏置
+    Q_INVOKABLE int getNegativeLODBias();
+    Q_INVOKABLE void setNegativeLODBias(int bias);
+
+    //纹理过滤质量
+    Q_INVOKABLE int getTextureFilterQuality();
+    Q_INVOKABLE void setTextureFilterQuality(int quality);
+    
+    // 线程控制设置
+    Q_INVOKABLE int getThreadControl();
+    Q_INVOKABLE void setThreadControl(int mode);
+
 signals:
     void errorOccurred(const QString& msg);
     void imageSharpeningChanged();
@@ -108,4 +150,12 @@ signals:
     void aaTransparencyChanged();
     void aaModeSelectorChanged();
     void lowLatencyModeChanged();
+    void maxFPSLimitChanged();
+    void aoModeChanged();
+    void shaderCacheSizeChanged();
+    void trilinearOptimizationChanged();
+    void anisotropicSampleOptimizationChanged();
+    void negativeLODBiasChanged();
+    void textureFilterQualityChanged();
+    void threadControlChanged();
 };

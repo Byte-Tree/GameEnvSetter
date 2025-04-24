@@ -138,7 +138,6 @@ NVDRS_SETTING GraphicsConfigManager::queryNvidiaSetting(const wchar_t* settingNa
 
     // 加载最新配置（确保数据同步）
     NvAPI_Status status = NvAPI_DRS_LoadSettings(globalSession);
-    qDebug() << "配置加载状态:" << status << "会话句柄:" << globalSession;
     if (status != NVAPI_OK) {
         qWarning() << "NvAPI_DRS_LoadSettings failed with error:" << status;
         return setting;
@@ -147,7 +146,6 @@ NVDRS_SETTING GraphicsConfigManager::queryNvidiaSetting(const wchar_t* settingNa
     // 优先尝试当前全局配置（而非仅基础配置）
     NvDRSProfileHandle hProfile = 0;
     status = NvAPI_DRS_GetBaseProfile(globalSession, &hProfile);
-    qDebug() << "当前全局配置文件句柄:" << hProfile << "状态码:" << status;
     if (status != NVAPI_OK) {
         qWarning() << "NvAPI_DRS_GetCurrentGlobalProfile failed with error:" << status;
         return setting;
@@ -162,7 +160,6 @@ NVDRS_SETTING GraphicsConfigManager::queryNvidiaSetting(const wchar_t* settingNa
     setting.settingId = settingId;
     setting.settingType = NVDRS_DWORD_TYPE;
     status = NvAPI_DRS_GetSetting(globalSession, hProfile, settingId, &setting);
-    qDebug() << "NvAPI_DRS_GetSetting返回状态:" << status << "配置文件句柄:" << hProfile;
     if (status != NVAPI_OK) {
         qWarning() << "NvAPI_DRS_GetSetting failed with error:" << status;
     }
@@ -269,6 +266,7 @@ void GraphicsConfigManager::setVSyncMode(int mode) {
         }
         emit errorOccurred(tr("应用垂直同步设置成功"));
     }
+    emit vSyncModeChanged();//触发信号，让qml更新u
 }
 
 int GraphicsConfigManager::getImageSharpeningStatus() {
@@ -319,6 +317,7 @@ void GraphicsConfigManager::setImageSharpening(int index) {
     if (!applyNvidiaSetting(drsSetting)) {
         emit errorOccurred(tr("应用图形增强设置失败"));
     }
+    emit imageSharpeningChanged();//触发信号，让qml更新u
 }
 
 int GraphicsConfigManager::getOpenGLGDICompatibility() {
@@ -349,6 +348,7 @@ void GraphicsConfigManager::setOpenGLGDICompatibility(int mode) {
     if(!applyNvidiaSetting(drsSetting)) {
         emit errorOccurred(tr("应用GDI兼容设置失败"));
     }
+    emit openGLGDICompatibilityChanged();//触发信号，让qml更新u
 }
 
 int GraphicsConfigManager::getOpenGLPresentMethod() {
@@ -379,6 +379,7 @@ void GraphicsConfigManager::setOpenGLPresentMethod(int mode) {
     if(!applyNvidiaSetting(drsSetting)) {
         emit errorOccurred(tr("应用呈现方法设置失败"));
     }
+    emit openGLPresentMethodChanged();//触发信号，让qml更新u
 }
 
 int GraphicsConfigManager::getTripleBuffer() {
@@ -407,6 +408,7 @@ void GraphicsConfigManager::setTripleBuffer(int mode) {
     if(!applyNvidiaSetting(drsSetting)) {
         emit errorOccurred(tr("应用三重缓冲设置失败"));
     }
+    emit tripleBufferChanged();//触发信号，让qml更新u
 }
 
 
@@ -445,6 +447,7 @@ void GraphicsConfigManager::setPowerManagementMode(int mode) {
     if (!applyNvidiaSetting(drsSetting)) {
         emit errorOccurred(tr("应用电源管理模式失败"));
     }
+    emit powerManagementModeChanged();//触发信号，让qml更新u
 }
 
 int GraphicsConfigManager::getAppIdleFPSLimit() {
@@ -462,6 +465,7 @@ void GraphicsConfigManager::setAppIdleFPSLimit(int fps) {
         //emit appIdleFPSLimitChanged();
         emit errorOccurred(tr("应用应用空闲时的FPS限制失败"));
     }
+    emit appIdleFPSLimitChanged();//触发信号，让qml更新u
 }
 
 int GraphicsConfigManager::getAnisotropicFiltering() {
@@ -523,6 +527,7 @@ void GraphicsConfigManager::setAnisotropicFiltering(int level) {
         // 属性赋值会自动触发anisotropicFilteringChanged信号
         emit errorOccurred(tr("异性过滤设置失败"));
     }
+    emit anisotropicFilteringChanged();//触发信号，让qml更新u
 }
 
 int GraphicsConfigManager::getAAModeSelector() {
@@ -563,6 +568,7 @@ void GraphicsConfigManager::setAAModeSelector(int mode) {
     if(!applyNvidiaSetting(setting)) {
         emit errorOccurred(tr("抗锯齿模式选择设置失败"));
     }
+    emit aaModeSelectorChanged();
 }
 
 int GraphicsConfigManager::getAAModeMethod() {
@@ -598,6 +604,7 @@ void GraphicsConfigManager::setAAModeMethod(int mode) {
     } else {
         emit aaModeMethodChanged();
     }
+    emit aaModeMethodChanged();
 }
 
 int GraphicsConfigManager::getFXAAEnable() {
@@ -626,6 +633,7 @@ void GraphicsConfigManager::setFXAAEnable(int index) {
     if (!applyNvidiaSetting(setting)) {
         emit errorOccurred(tr("FXAA设置失败"));
     }
+    emit fxaaEnableChanged();
 }
 
 
@@ -650,6 +658,7 @@ void GraphicsConfigManager::setAAGammaCorrection(int level) {
     if (!applyNvidiaSetting(setting)) {
         emit errorOccurred("抗锯齿伽马校正设置失败");
     }
+    emit aaGammaCorrectionChanged();
 }
 
 int GraphicsConfigManager::getAATransparency() {
@@ -686,6 +695,7 @@ void GraphicsConfigManager::setAATransparency(int mode) {
     if (!applyNvidiaSetting(setting)) {
         emit errorOccurred(tr("透明抗锯齿设置失败，请检查驱动支持"));
     }
+    emit aaTransparencyChanged();
 }
 
 
@@ -728,7 +738,228 @@ void GraphicsConfigManager::setLowLatencyMode(int value) {
     if (!applyNvidiaSetting(setting)) {
         emit errorOccurred(tr("设置低延迟模式失败"));
     }
+    emit lowLatencyModeChanged();
 }
 
 
+
+
+int GraphicsConfigManager::getMaxFPSLimit() {
+    NVDRS_SETTING setting = queryNvidiaSetting(FRL_FPS_STRING);
+    return setting.u32CurrentValue;
+}
+
+void GraphicsConfigManager::setMaxFPSLimit(int limit) {
+    NVDRS_SETTING setting = {0};
+    setting.version = NVDRS_SETTING_VER;
+    setting.settingId = FRL_FPS_ID;
+    setting.settingType = NVDRS_DWORD_TYPE;
+    setting.u32CurrentValue = qBound(0, limit, 0x3ff);
+
+    if(!applyNvidiaSetting(setting)) {
+        emit errorOccurred("最大帧率限制设置失败");
+    }
+    emit maxFPSLimitChanged();
+}
+
+int GraphicsConfigManager::getAoMode()  {
+    NVDRS_SETTING setting = queryNvidiaSetting(AO_MODE_STRING);
+    switch(setting.u32CurrentValue) {
+        case AO_MODE_OFF: return 0;
+        case AO_MODE_LOW: return 1;
+        case AO_MODE_MEDIUM: return 2;
+        case AO_MODE_HIGH: return 3;
+        default: return 0;
+    }
+}
+
+void GraphicsConfigManager::setAoMode(int value) {
+    NVDRS_SETTING setting = {0};
+    setting.version = NVDRS_SETTING_VER;
+    setting.settingId = AO_MODE_ID;
+    setting.settingType = NVDRS_DWORD_TYPE;
+    switch(value) {
+       case 0: setting.u32CurrentValue = AO_MODE_OFF; break;
+       case 1: setting.u32CurrentValue = AO_MODE_LOW; break;
+       case 2: setting.u32CurrentValue = AO_MODE_MEDIUM; break;
+       case 3: setting.u32CurrentValue = AO_MODE_HIGH; break; 
+    }
+    if(!applyNvidiaSetting(setting))
+    {
+        emit errorOccurred(tr("设置环境光模式失败"));
+    }
+    emit aoModeChanged();//get set不在同一个控件里，得自己触发
+}
+
+
+int GraphicsConfigManager::getShaderCacheSize() {
+    NVDRS_SETTING setting = queryNvidiaSetting(PS_SHADERDISKCACHE_MAX_SIZE_STRING);
+    return setting.u32CurrentValue;
+}
+
+void GraphicsConfigManager::setShaderCacheSize(int value) {
+    NVDRS_SETTING setting = {0};
+    setting.version = NVDRS_SETTING_VER;
+    setting.settingId = PS_SHADERDISKCACHE_MAX_SIZE_ID;
+    setting.settingType = NVDRS_DWORD_TYPE;
+    setting.u32CurrentValue = value;
+
+    if(!applyNvidiaSetting(setting)) {
+        emit errorOccurred(tr("设置着色器缓存大小失败"));
+        return;
+    }
+    emit shaderCacheSizeChanged();//get set不在同一个控件里，得自己触发
+}
+
+int GraphicsConfigManager::getTrilinearOptimization()
+{
+    NVDRS_SETTING setting = queryNvidiaSetting(PS_TEXFILTER_DISABLE_TRILIN_SLOPE_STRING);
+    return setting.u32CurrentValue;
+}
+
+void GraphicsConfigManager::setTrilinearOptimization(int mode)
+{
+    NVDRS_SETTING setting = {};
+    setting.version = NVDRS_SETTING_VER;
+    setting.settingId = PS_TEXFILTER_DISABLE_TRILIN_SLOPE_ID;
+    setting.settingType = NVDRS_DWORD_TYPE;
+    setting.u32CurrentValue = mode;//英伟达控制面板里面，关是1，开是0,貌似和定义相反的
+
+    if (!applyNvidiaSetting(setting)) {
+        emit errorOccurred("Failed to set trilinear optimization");
+        return;
+    }
+    emit trilinearOptimizationChanged();
+}
+
+int GraphicsConfigManager::getAnisotropicSampleOptimization() {
+    NVDRS_SETTING setting = queryNvidiaSetting(PS_TEXFILTER_ANISO_OPTS2_STRING);
+    return setting.u32CurrentValue;
+}
+
+void GraphicsConfigManager::setAnisotropicSampleOptimization(int mode) {
+    NVDRS_SETTING setting;
+    setting.version = NVDRS_SETTING_VER;
+    setting.settingId = PS_TEXFILTER_ANISO_OPTS2_ID;
+    setting.settingType = NVDRS_DWORD_TYPE;
+    setting.u32CurrentValue = mode;
+    
+    if (!applyNvidiaSetting(setting)) {
+        emit errorOccurred("设置各向异性采样优化失败");
+    } else {
+        emit anisotropicSampleOptimizationChanged();
+    }
+}
+
+int GraphicsConfigManager::getNegativeLODBias() {
+    NVDRS_SETTING setting = queryNvidiaSetting(PS_TEXFILTER_NO_NEG_LODBIAS_STRING);
+    return setting.u32CurrentValue;
+}
+
+void GraphicsConfigManager::setNegativeLODBias(int mode) {
+    NVDRS_SETTING setting = {};
+    setting.version = NVDRS_SETTING_VER;
+    setting.settingId = PS_TEXFILTER_NO_NEG_LODBIAS_ID;
+    setting.settingType = NVDRS_DWORD_TYPE;
+    setting.u32CurrentValue = mode;
+    
+    if (!applyNvidiaSetting(setting)) {
+        emit errorOccurred("设置负LOD偏置失败");
+    } else {
+        emit negativeLODBiasChanged();
+    }
+}
+
+int GraphicsConfigManager::getTextureFilterQuality() {
+    NVDRS_SETTING setting = queryNvidiaSetting(QUALITY_ENHANCEMENTS_STRING);
+
+    switch(setting.u32CurrentValue)
+    {
+    case QUALITY_ENHANCEMENTS_HIGHQUALITY:
+        return 0;
+    case QUALITY_ENHANCEMENTS_QUALITY:
+        return 1;
+    case QUALITY_ENHANCEMENTS_PERFORMANCE:
+        return 2;
+    case QUALITY_ENHANCEMENTS_HIGHPERFORMANCE:
+        return 3;
+    default:
+        return 1;
+    }
+}
+
+void GraphicsConfigManager::setTextureFilterQuality(int quality) {
+    NVDRS_SETTING setting = {0};
+    setting.version = NVDRS_SETTING_VER;
+    setting.settingId = QUALITY_ENHANCEMENTS_ID;
+    setting.settingType = NVDRS_DWORD_TYPE;
+
+    switch(quality)
+    {
+    case 0:
+        setting.u32CurrentValue = QUALITY_ENHANCEMENTS_HIGHQUALITY;
+        break;
+    case 1:
+        setting.u32CurrentValue = QUALITY_ENHANCEMENTS_QUALITY;
+        break;
+    case 2:
+        setting.u32CurrentValue = QUALITY_ENHANCEMENTS_PERFORMANCE;
+        break;
+    case 3:
+        setting.u32CurrentValue = QUALITY_ENHANCEMENTS_HIGHPERFORMANCE;
+        break;
+    default:
+        return;
+    }
+
+    if (!applyNvidiaSetting(setting)) {
+        emit errorOccurred(QStringLiteral("设置纹理过滤质量失败"));
+    } else {
+        emit textureFilterQualityChanged();
+    }
+}
+
+int GraphicsConfigManager::getThreadControl() {
+    NVDRS_SETTING setting = queryNvidiaSetting(OGL_THREAD_CONTROL_STRING);
+
+    switch(setting.u32CurrentValue)
+    {
+    case 0:
+        return 0;
+    case OGL_THREAD_CONTROL_ENABLE:
+        return 1;
+    case OGL_THREAD_CONTROL_DISABLE:
+        return 2;
+    default:
+        return 0;
+    }
+}
+
+void GraphicsConfigManager::setThreadControl(int mode) {
+    NVDRS_SETTING setting = {0};
+    setting.version = NVDRS_SETTING_VER;
+    setting.settingId = OGL_THREAD_CONTROL_ID;
+    setting.settingType = NVDRS_DWORD_TYPE;
+
+    switch(mode)
+    {
+    case 0:
+        setting.u32CurrentValue = 0;
+        break;
+    case 1:
+        setting.u32CurrentValue = OGL_THREAD_CONTROL_ENABLE;
+        break;
+    case 2:
+        setting.u32CurrentValue = OGL_THREAD_CONTROL_DISABLE;
+        break;
+    default:
+        return;
+    }
+
+    if (!applyNvidiaSetting(setting)) {
+        emit errorOccurred(QStringLiteral("设置线程优化失败"));
+    } else {
+        emit threadControlChanged();
+    }
+}
 

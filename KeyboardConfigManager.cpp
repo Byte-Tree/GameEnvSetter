@@ -19,6 +19,7 @@ void KeyboardConfigManager::setRepeatDelay(int delay) {
     if(!SystemParametersInfo(SPI_SETKEYBOARDDELAY, static_cast<UINT>(delay), nullptr, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE)) {
         emit errorOccurred(tr("设置键盘延迟失败"));
     }
+    emit repeatDelayChanged(); // 通知 QML 重复延迟已更改为新值
 }
 
 int KeyboardConfigManager::repeatRate() const {
@@ -40,4 +41,5 @@ void KeyboardConfigManager::setRepeatRate(int rate) {
     if(!SystemParametersInfo(SPI_SETKEYBOARDSPEED, static_cast<UINT>(rate), nullptr, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE)) {
         emit errorOccurred(tr("设置键盘速度失败"));
     }
+    emit repeatRateChanged(); // 通知 QML 重复速度已更改为新值
 }

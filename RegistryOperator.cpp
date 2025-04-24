@@ -38,5 +38,7 @@ bool RegistryOperator::setWin32PrioritySeparation(DWORD value) {
     }
 
     RegCloseKey(hKey);
+
+    emit win32PrioritySeparationChanged();//get和set方法不在同一个控件就得自己这样发送信号
     return true;
 }
