@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QObject>
+#include <QtCore/QVariant>
 #include "nvapi.h"
 #include "NvApiDriverSettings.h"
 
@@ -28,6 +29,9 @@ class GraphicsConfigManager : public QObject {
     Q_PROPERTY(int negativeLODBias READ getNegativeLODBias WRITE setNegativeLODBias NOTIFY negativeLODBiasChanged)
     Q_PROPERTY(int textureFilterQuality READ getTextureFilterQuality WRITE setTextureFilterQuality NOTIFY textureFilterQualityChanged)
     Q_PROPERTY(int threadControl READ getThreadControl WRITE setThreadControl NOTIFY threadControlChanged)
+    Q_PROPERTY(QVariant scalingMode READ getScalingMode WRITE setScalingMode NOTIFY scalingModeChanged)
+    //Q_PROPERTY(int scalingSource READ getScalingSource WRITE setScalingSource NOTIFY scalingSourceChanged)
+    //Q_PROPERTY(bool scalingOverride READ getScalingOverride WRITE setScalingOverride NOTIFY scalingOverrideChanged)
     
 private:
     static bool isNvAPIInitialized;
@@ -41,6 +45,8 @@ public:
     static NvU32 getSettingId(const wchar_t* settingName);
     //获取所有可用的显卡设置
     QList<QPair<QString, QPair<NvU32, NvU32>>> getAllNvidiaSettings();
+    //获取所有显示设置
+    NvAPI_Status CheckDisplayConfig();
 public:
     static bool initializeNvAPI();
     static void shutdownNvAPI();
@@ -133,6 +139,18 @@ public:
     Q_INVOKABLE int getThreadControl();
     Q_INVOKABLE void setThreadControl(int mode);
 
+    // 缩放模式设置
+    Q_INVOKABLE QVariant getScalingMode();
+    Q_INVOKABLE void setScalingMode(QVariant mode);
+
+    // // 缩放源设置
+    // Q_INVOKABLE int getScalingSource();
+    // Q_INVOKABLE void setScalingSource(int source);
+
+    // // 缩放覆盖设置
+    // Q_INVOKABLE bool getScalingOverride();
+    // Q_INVOKABLE void setScalingOverride(bool enabled);
+
 signals:
     void errorOccurred(const QString& msg);
     void imageSharpeningChanged();
@@ -158,4 +176,7 @@ signals:
     void negativeLODBiasChanged();
     void textureFilterQualityChanged();
     void threadControlChanged();
+    void scalingModeChanged();
+    void scalingSourceChanged();
+    void scalingOverrideChanged();
 };

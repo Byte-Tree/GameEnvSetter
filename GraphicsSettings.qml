@@ -5,7 +5,7 @@ import QtQuick.Layouts 1.15
 GroupBox {
     title: "显卡设置"
     Layout.fillWidth: true
-    implicitHeight: 1100
+    implicitHeight: 1150
 
     ColumnLayout {
         width: parent.width
@@ -206,8 +206,30 @@ GroupBox {
                         title: "调整桌面尺寸和位置"
                         ColumnLayout {
                             spacing: 8
-                            RowLayout { Label { text: "选择缩放模式" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "屏幕缩放模式。" } ComboBox { model: [] } }
+                            RowLayout { Label { text: "选择缩放模式" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "屏幕缩放模式。" } 
+                            ComboBox { 
+                                model: ["默认","纵横比","全屏","无缩放"]
+                                currentIndex: graphicsConfig.scalingMode
+                                onActivated: function(index) { graphicsConfig.setScalingMode(index) }
+                            } }
+
+                            RowLayout { Label { text: "对以下项目执行缩放" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "缩放画面这个事er,是由谁来处理的。GPU来处理缩放后的图像，没有投放延迟，但是影响帧数，推荐这个。显示器来处理缩放后的图像，会有5ms的投放延迟，但是不会降低帧数。" }
+                                ComboBox { 
+                                model: ["GPU","显示器"]
+                                currentIndex: graphicsConfig.scalingSource
+                                onActivated: function(index) { graphicsConfig.setScalingSource(index) }
+                            } }
+
+                            RowLayout{
+                                CheckBox {
+                                text: "覆盖由游戏和程序设置的缩放模式"
+                                checked: graphicsConfig.scalingOverride
+                                onClicked: graphicsConfig.setScalingOverride(checked)
+                            }
+                                Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "覆盖后进入游戏不会切换分辨率。" }
+                            }
                         }
+
                     }
                     
                     GroupBox {
