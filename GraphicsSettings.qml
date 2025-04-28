@@ -207,27 +207,76 @@ GroupBox {
                         ColumnLayout {
                             spacing: 8
                             RowLayout { Label { text: "选择缩放模式" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "屏幕缩放模式。" } 
-                            ComboBox { 
-                                model: ["默认","纵横比","全屏","无缩放"]
-                                currentIndex: graphicsConfig.scalingMode
-                                onActivated: function(index) { graphicsConfig.setScalingMode(index) }
-                            } }
+                                ComboBox {
+                                    id: displayIdCombo
+                                    model: [] // 初始模型为空
+                                    onActivated: updateScalingModeCombo // 选择项变化时触发更新缩放模式
+                                    
+                                    // 组件完成时初始化显示器ID列表
+                                    Component.onCompleted: {
+                                        // 从配置获取缩放模式数据并解析为JSON
+                                        var scalingData = JSON.parse(graphicsConfig.getScalingMode());
+                                        var displayIds = [];
+                                        
+                                        // 遍历所有设备的目标显示器ID
+                                        for (var i = 0; i < scalingData.devices.length; i++) {
+                                            for (var j = 0; j < scalingData.devices[i].targets.length; j++) {
+                                                displayIds.push(scalingData.devices[i].targets[j].displayId);
+                                            }
+                                        }
+                                        
+                                        // 设置下拉框模型为收集到的显示器ID
+                                        model = displayIds;
+                                        
+                                        // 如果有显示器ID，默认选择第一个并更新缩放模式
+                                        if (displayIds.length > 0) {
+                                            currentIndex = 0;
+                                            updateScalingModeCombo(0);
+                                        }
+                                    }
+                                    
+                                    // 根据选择的显示器索引更新缩放模式下拉框
+                                    function updateScalingModeCombo(displayIndex) {
+                                        var scalingData = JSON.parse(graphicsConfig.getScalingMode());
+                                        var scalingValue = 0;
 
-                            RowLayout { Label { text: "对以下项目执行缩放" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "缩放画面这个事er,是由谁来处理的。GPU来处理缩放后的图像，没有投放延迟，但是影响帧数，推荐这个。显示器来处理缩放后的图像，会有5ms的投放延迟，但是不会降低帧数。" }
-                                ComboBox { 
-                                model: ["GPU","显示器"]
-                                currentIndex: graphicsConfig.scalingSource
-                                onActivated: function(index) { graphicsConfig.setScalingSource(index) }
-                            } }
+                                        // 查找对应显示器的缩放值
+                                        for (var i = 0; i < scalingData.devices.length; i++) {
+                                            for (var j = 0; j < scalingData.devices[i].targets.length; j++) {
+                                                if (j === displayIndex) {
+                                                    scalingValue = scalingData.devices[i].targets[j].scaling;
+                                                    break;
+                                                }
+                                            }
+                                        }
 
-                            RowLayout{
-                                CheckBox {
-                                text: "覆盖由游戏和程序设置的缩放模式"
-                                checked: graphicsConfig.scalingOverride
-                                onClicked: graphicsConfig.setScalingOverride(checked)
+                                        // 设置缩放模式下拉框的当前索引
+                                        scalingModeCombo.currentIndex = scalingModeCombo.mapScalingValue(scalingValue);
+                                    }
+                                }
+                                
+                                // 缩放模式选择下拉框
+                                ComboBox {
+                                    id: scalingModeCombo
+                                    model: ["无缩放:0或3", "纵横比:5或6", "全屏:1或2"] // 三种缩放模式选项
+                                    
+                                    // 将缩放值映射到下拉框索引
+                                    function mapScalingValue(scaling) {
+                                        if (scaling === 0 || scaling === 3) return 0; // 无缩放模式
+                                        if (scaling === 5 || scaling === 6) return 1; // 保持纵横比模式
+                                        if (scaling === 1 || scaling === 2) return 2; // 全屏模式
+                                        return 0; // 默认无缩放
+                                    }
+                                    
+                                    // 当选择缩放模式时更新配置
+                                    onActivated: function(index) {
+                                        var scalingValue = [0, 5, 1][index]; // 将索引转换为实际缩放值
+                                        graphicsConfig.setScalingMode({"displayId": displayIdCombo.currentText, "scaling": scalingValue});
+                                    }
+                                }
+
                             }
-                                Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "覆盖后进入游戏不会切换分辨率。" }
-                            }
+                            
                         }
 
                     }
@@ -260,3 +309,5 @@ GroupBox {
         }
     }
 }
+
+

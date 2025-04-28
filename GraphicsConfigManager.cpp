@@ -2,6 +2,9 @@
 
 #include <QtCore/QThread>
 #include <QtCore/QDebug>
+#include <QJsonDocument>
+#include <qjsonarray.h>
+#include <qjsonobject.h>
 
 #include "NvApiDriverSettings.h"
 
@@ -963,7 +966,7 @@ void GraphicsConfigManager::setThreadControl(int mode) {
     }
 }
 
-const char* DecodeScalingMode(NvU32 scaling) {
+const QString DecodeScalingMode(NvU32 scaling) {
     switch(scaling) {
     case NV_SCALING_DEFAULT:
         return "默认缩放模式";
@@ -982,26 +985,29 @@ const char* DecodeScalingMode(NvU32 scaling) {
     }
 }
 
-NvAPI_Status GraphicsConfigManager::CheckDisplayConfig() {
+QByteArray GraphicsConfigManager::getScalingMode() {
+    QJsonObject root;
     NvAPI_Status status = NVAPI_OK;
     NvU32 deviceCount = 0;
     NV_DISPLAYCONFIG_PATH_INFO_V2* pathInfo = nullptr;
 
     // 初始化NVIDIA API
-    if (!GraphicsConfigManager::initializeNvAPI()) {
-        qWarning().noquote() << QString("[错误] NVIDIA API初始化失败 (0x%1)").arg(status, 0, 16);
-        return NVAPI_API_NOT_INITIALIZED;
+    if (!initializeNvAPI()) {
+        root["error"] = QJsonValue("NVIDIA_API_INIT_FAILED");
+    root["devices"] = QJsonArray();
+    return QJsonDocument(root).toJson();
     }
 
-    // 第一阶段：获取设备数量
+    // 获取设备信息
     status = NvAPI_DISP_GetDisplayConfig(&deviceCount, pathInfo);
     if (status != NVAPI_OK || deviceCount == 0) {
-        qWarning().noquote() << QString("[错误] 无法获取显示设备数量 (0x%1)").arg(status, 0, 16);
-        return status ? status : NVAPI_ERROR;
+        root["error"] = QJsonValue(QString("DEVICE_COUNT_ERROR_0x%1").arg(status, 0, 16));
+    root["devices"] = QJsonArray();
+    return QJsonDocument(root).toJson();
     }
-    qDebug().noquote() << QString("\n▶ 检测到 %1 个显示设备").arg(deviceCount);
 
-    // 分配路径信息内存
+    // 构建设备树结构
+    QJsonArray devicesArray;
     pathInfo = new NV_DISPLAYCONFIG_PATH_INFO_V2[deviceCount];
     memset(pathInfo, 0, sizeof(NV_DISPLAYCONFIG_PATH_INFO_V2) * deviceCount);
     for (NvU32 i = 0; i < deviceCount; ++i) {
@@ -1013,9 +1019,10 @@ NvAPI_Status GraphicsConfigManager::CheckDisplayConfig() {
     if (status != NVAPI_OK) {
         qWarning().noquote() << QString("[错误] 无法获取显示配置详情 (0x%1)").arg(status, 0, 16);
         delete[] pathInfo;
-        return status;
+        root["error"] = QJsonValue(QString("DISPLAY_CONFIG_ERROR_0x%1").arg(status, 0, 16));
+    root["devices"] = QJsonArray();
+    return QJsonDocument(root).toJson();
     }
-    qDebug().noquote() << "▶ 成功获取显示配置结构";
 
     // 初始化嵌套数据结构
     for (NvU32 i = 0; i < deviceCount; ++i) {
@@ -1025,7 +1032,7 @@ NvAPI_Status GraphicsConfigManager::CheckDisplayConfig() {
         if (pathInfo[i].targetInfoCount > 0) {
             pathInfo[i].targetInfo = new NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2[pathInfo[i].targetInfoCount];
             for (NvU32 j = 0; j < pathInfo[i].targetInfoCount; ++j) {
-                pathInfo[i].targetInfo[j].details = new NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1();
+                pathInfo[i].targetInfo[j].details = new NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1();//这是一个描述显示目标详细配置的结构体指针
                 pathInfo[i].targetInfo[j].details->version = NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_VER1;
             }
         }
@@ -1034,17 +1041,22 @@ NvAPI_Status GraphicsConfigManager::CheckDisplayConfig() {
     // 第三阶段：验证配置
     status = NvAPI_DISP_GetDisplayConfig(&deviceCount, pathInfo);
     if (status == NVAPI_OK) {
-        qDebug().noquote() << "▶ 当前显示配置：";
         for (NvU32 i = 0; i < deviceCount; ++i) {
-            qDebug().noquote() << QString("  设备#%1 有 %2 个显示目标").arg(i+1).arg(pathInfo[i].targetInfoCount);
+            QJsonObject device;
+            QJsonArray targets;
+
             for (NvU32 j = 0; j < pathInfo[i].targetInfoCount; ++j) {
-                qDebug().noquote() << QString("    → 目标%1: %2")
-                                          .arg(j+1)
-                                          .arg(DecodeScalingMode(pathInfo[i].targetInfo[j].details->scaling));
+                QJsonObject target;
+                target["displayId"] = static_cast<int>(pathInfo[i].targetInfo[j].displayId);
+                target["scaling"] = static_cast<int>(pathInfo[i].targetInfo[j].details->scaling);
+                targets.append(QJsonValue(target));
             }
+
+            QJsonObject deviceObj;
+            deviceObj["targets"] = targets;
+            devicesArray.append(deviceObj);
         }
     }
-
     // 配置验证
     status = NvAPI_DISP_SetDisplayConfig(deviceCount, pathInfo, NV_DISPLAYCONFIG_VALIDATE_ONLY);
     if (status != NVAPI_OK) {
@@ -1063,65 +1075,8 @@ NvAPI_Status GraphicsConfigManager::CheckDisplayConfig() {
     }
     delete[] pathInfo;
 
-    return status;
-}
-
-QVariant GraphicsConfigManager::getScalingMode() {
-    QVariantMap result;
-    NvAPI_Status status = NVAPI_OK;
-    NvU32 deviceCount = 0;
-    NV_DISPLAYCONFIG_PATH_INFO_V2* pathInfo = nullptr;
-
-    // 初始化NVIDIA API
-    if (!initializeNvAPI()) {
-        result["error"] = "NVIDIA API初始化失败";
-        return result;
-    }
-
-    // 获取设备信息
-    status = NvAPI_DISP_GetDisplayConfig(&deviceCount, pathInfo);
-    if (status != NVAPI_OK || deviceCount == 0) {
-        result["error"] = QString("无法获取显示设备数量 (0x%1)").arg(status, 0, 16);
-        return result;
-    }
-
-    // 构建设备树结构
-    QVariantList devices;
-    pathInfo = new NV_DISPLAYCONFIG_PATH_INFO_V2[deviceCount];
-    
-    // 填充设备数据
-    for (NvU32 i = 0; i < deviceCount; ++i) {
-        QVariantMap device;
-        QVariantList targets;
-
-        for (NvU32 j = 0; j < pathInfo[i].targetInfoCount; ++j) {
-            QVariantMap target;
-            target["id"] = static_cast<int>(j+1);
-            target["scaling"] = DecodeScalingMode(pathInfo[i].targetInfo[j].details->scaling);
-            targets.append(target);
-        }
-
-        device["device_id"] = static_cast<int>(i+1);
-        device["target_count"] = static_cast<int>(pathInfo[i].targetInfoCount);
-        device["targets"] = targets;
-        devices.append(device);
-    }
-
-    // 内存清理
-    for (NvU32 i = 0; i < deviceCount; ++i) {
-        delete pathInfo[i].sourceModeInfo;
-        if (pathInfo[i].targetInfo) {
-            for (NvU32 j = 0; j < pathInfo[i].targetInfoCount; ++j) {
-                delete pathInfo[i].targetInfo[j].details;
-            }
-            delete[] pathInfo[i].targetInfo;
-        }
-    }
-    delete[] pathInfo;
-
-    result["device_count"] = static_cast<int>(deviceCount);
-    result["devices"] = devices;
-    return result;
+    root["devices"] = devicesArray;
+    return QJsonDocument(root).toJson();
 }
 
 void GraphicsConfigManager::setScalingMode(QVariant mode) {

@@ -3,7 +3,6 @@
 #include <QObject>
 #include <QtCore/QVariant>
 #include "nvapi.h"
-#include "NvApiDriverSettings.h"
 
 class GraphicsConfigManager : public QObject {
     Q_OBJECT
@@ -29,7 +28,7 @@ class GraphicsConfigManager : public QObject {
     Q_PROPERTY(int negativeLODBias READ getNegativeLODBias WRITE setNegativeLODBias NOTIFY negativeLODBiasChanged)
     Q_PROPERTY(int textureFilterQuality READ getTextureFilterQuality WRITE setTextureFilterQuality NOTIFY textureFilterQualityChanged)
     Q_PROPERTY(int threadControl READ getThreadControl WRITE setThreadControl NOTIFY threadControlChanged)
-    Q_PROPERTY(QVariant scalingMode READ getScalingMode WRITE setScalingMode NOTIFY scalingModeChanged)
+    Q_PROPERTY(QByteArray scalingMode READ getScalingMode WRITE setScalingMode NOTIFY scalingModeChanged)
     //Q_PROPERTY(int scalingSource READ getScalingSource WRITE setScalingSource NOTIFY scalingSourceChanged)
     //Q_PROPERTY(bool scalingOverride READ getScalingOverride WRITE setScalingOverride NOTIFY scalingOverrideChanged)
     
@@ -140,7 +139,7 @@ public:
     Q_INVOKABLE void setThreadControl(int mode);
 
     // 缩放模式设置
-    Q_INVOKABLE QVariant getScalingMode();
+    Q_INVOKABLE QByteArray getScalingMode();
     Q_INVOKABLE void setScalingMode(QVariant mode);
 
     // // 缩放源设置
