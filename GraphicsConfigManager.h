@@ -44,8 +44,10 @@ public:
     static NvU32 getSettingId(const wchar_t* settingName);
     //获取所有可用的显卡设置
     QList<QPair<QString, QPair<NvU32, NvU32>>> getAllNvidiaSettings();
-    //获取所有显示设置
+    //获取所有显示器设置
     NvAPI_Status CheckDisplayConfig();
+    //申请内存并获取显示器设置
+    NvAPI_Status AllocateAndGetDisplayConfig(NvU32* pathCount, NV_DISPLAYCONFIG_PATH_INFO_V2** pathInfo);
 public:
     static bool initializeNvAPI();
     static void shutdownNvAPI();
@@ -140,7 +142,7 @@ public:
 
     // 缩放模式设置
     Q_INVOKABLE QByteArray getScalingMode();
-    Q_INVOKABLE void setScalingMode(QVariant mode);
+    Q_INVOKABLE void setScalingMode(const QByteArray& params);
 
     // // 缩放源设置
     // Q_INVOKABLE int getScalingSource();

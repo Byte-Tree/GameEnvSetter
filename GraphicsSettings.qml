@@ -262,16 +262,30 @@ GroupBox {
                                     
                                     // 将缩放值映射到下拉框索引
                                     function mapScalingValue(scaling) {
-                                        if (scaling === 0 || scaling === 3) return 0; // 无缩放模式
-                                        if (scaling === 5 || scaling === 6) return 1; // 保持纵横比模式
-                                        if (scaling === 1 || scaling === 2) return 2; // 全屏模式
+                                        switch(scaling) {
+                                            case 0:
+                                            case 3: return 0; // 无缩放模式
+                                            case 5:
+                                            case 6: return 1; // 保持纵横比模式
+                                            case 1:
+                                            case 2: return 2; // 全屏模式
+                                            default: return 0;
+                                        }
                                         return 0; // 默认无缩放
                                     }
                                     
                                     // 当选择缩放模式时更新配置
                                     onActivated: function(index) {
-                                        var scalingValue = [0, 5, 1][index]; // 将索引转换为实际缩放值
-                                        graphicsConfig.setScalingMode({"displayId": displayIdCombo.currentText, "scaling": scalingValue});
+                                        var scalingValue = 0;
+                                        switch(index) {
+                                            case 0: scalingValue = 3; break;//我电脑是这个数值，我就按照这个为标准来设置了
+                                            case 1: scalingValue = 5; break;
+                                            case 2: scalingValue = 2; break;
+                                        }
+                                        var params = {};
+                                        params["displayId"] = displayIdCombo.currentText;
+                                        params["mode"] = scalingValue;
+                                        graphicsConfig.setScalingMode(Qt.btoa(JSON.stringify(params)));
                                     }
                                 }
 

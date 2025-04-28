@@ -170,6 +170,34 @@ NVDRS_SETTING GraphicsConfigManager::queryNvidiaSetting(const wchar_t* settingNa
     return setting;
 }
 
+NvAPI_Status GraphicsConfigManager::AllocateAndGetDisplayConfig(NvU32* pathCount, NV_DISPLAYCONFIG_PATH_INFO_V2** pathInfo) {
+    if (!initializeNvAPI()) {
+        return NVAPI_API_NOT_INITIALIZED;
+    }
+
+    // 第一次调用获取路径数量
+    NvAPI_Status status = NvAPI_DISP_GetDisplayConfig(pathCount, nullptr);
+    if (status != NVAPI_OK) {
+        return status;
+    }
+
+    // 分配内存
+    *pathInfo = new NV_DISPLAYCONFIG_PATH_INFO_V2[*pathCount];
+    memset(*pathInfo, 0, sizeof(NV_DISPLAYCONFIG_PATH_INFO_V2) * (*pathCount));
+    for (NvU32 i = 0; i < *pathCount; ++i) {
+        (*pathInfo)[i].version = NV_DISPLAYCONFIG_PATH_INFO_VER2;
+    }
+
+    // 第二次调用获取详细配置
+    status = NvAPI_DISP_GetDisplayConfig(pathCount, *pathInfo);
+    if (status != NVAPI_OK) {
+        delete[] *pathInfo;
+        *pathInfo = nullptr;
+    }
+
+    return status;
+}
+
 int GraphicsConfigManager::getVSyncMode() {
     NVDRS_SETTING setting = queryNvidiaSetting(VSYNCMODE_STRING);
 
@@ -1079,7 +1107,57 @@ QByteArray GraphicsConfigManager::getScalingMode() {
     return QJsonDocument(root).toJson();
 }
 
-void GraphicsConfigManager::setScalingMode(QVariant mode) {
+void GraphicsConfigManager::setScalingMode(const QByteArray& params)
+{
+    QByteArray decodedParams = QByteArray::fromBase64(params);
+    QJsonDocument doc = QJsonDocument::fromJson(decodedParams);
+    if (!doc.isObject()) {
+        qWarning() << "Invalid scaling mode parameters:" << decodedParams;
+        return;
+    }
+    QJsonObject obj = doc.object();
+    int displayId = obj["displayId"].toInt();
+    int mode = obj["mode"].toInt();
+    if (!initializeNvAPI()) {
+        qWarning() << "NVIDIA API 初始化失败";
+        return;
+    }
 
+    NvU32 pathCount = 0;
+    NV_DISPLAYCONFIG_PATH_INFO* pathInfo = nullptr;
+    NvAPI_Status status = AllocateAndGetDisplayConfig(&pathCount, &pathInfo);
+    if (status != NVAPI_OK) {
+        qWarning() << "获取显示配置失败，错误码:" << status;
+        return;
+    }
+
+    // 查找匹配的displayId
+    for (NvU32 i = 0; i < pathCount; ++i) {
+        for (NvU32 j = 0; j < pathInfo[i].targetInfoCount; ++j) {
+            if (pathInfo[i].targetInfo[j].displayId == displayId) {
+                // 设置缩放模式
+                pathInfo[i].targetInfo[j].details->scaling = (NV_SCALING)mode;
+                
+                // 应用配置
+                status = NvAPI_DISP_SetDisplayConfig(pathCount, pathInfo, 0);
+                if (status != NVAPI_OK) {
+                    qWarning() << "设置缩放模式失败，错误码:" << status;
+                }
+                break;
+            }
+        }
+    }
+
+    // 释放内存
+    for (NvU32 i = 0; i < pathCount; ++i) {
+        delete pathInfo[i].sourceModeInfo;
+        if (pathInfo[i].targetInfo) {
+            for (NvU32 j = 0; j < pathInfo[i].targetInfoCount; ++j) {
+                delete pathInfo[i].targetInfo[j].details;
+            }
+            delete[] pathInfo[i].targetInfo;
+        }
+    }
+    delete[] pathInfo;
 }
 
