@@ -283,7 +283,7 @@ GroupBox {
                                             case 2: scalingValue = 2; break;
                                         }
                                         var params = {};
-                                        params["displayId"] = displayIdCombo.currentText;
+                                        params["displayId"] = displayIdCombo.model[displayIdCombo.currentIndex];
                                         params["mode"] = scalingValue;
                                         graphicsConfig.setScalingMode(Qt.btoa(JSON.stringify(params)));
                                     }

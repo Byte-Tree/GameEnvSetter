@@ -132,6 +132,19 @@ bool GraphicsConfigManager::applyNvidiaSetting(NVDRS_SETTING& drsSetting) {
 }
 
 // 新增的通用查询方法
+void GraphicsConfigManager::FreeDisplayConfigResources(NV_DISPLAYCONFIG_PATH_INFO_V2* pathInfo, NvU32 pathCount) {
+    for (NvU32 i = 0; i < pathCount; ++i) {
+        delete pathInfo[i].sourceModeInfo;
+        if (pathInfo[i].targetInfo) {
+            for (NvU32 j = 0; j < pathInfo[i].targetInfoCount; ++j) {
+                delete pathInfo[i].targetInfo[j].details;
+            }
+            delete[] pathInfo[i].targetInfo;
+        }
+    }
+    delete[] pathInfo;
+}
+
 NVDRS_SETTING GraphicsConfigManager::queryNvidiaSetting(const wchar_t* settingName) {
     NVDRS_SETTING setting = {0};
 
@@ -170,32 +183,84 @@ NVDRS_SETTING GraphicsConfigManager::queryNvidiaSetting(const wchar_t* settingNa
     return setting;
 }
 
-NvAPI_Status GraphicsConfigManager::AllocateAndGetDisplayConfig(NvU32* pathCount, NV_DISPLAYCONFIG_PATH_INFO_V2** pathInfo) {
-    if (!initializeNvAPI()) {
-        return NVAPI_API_NOT_INITIALIZED;
+NvAPI_Status GraphicsConfigManager::AllocateAndGetDisplayConfig(NvU32* pathInfoCount, NV_DISPLAYCONFIG_PATH_INFO** pPathInfo)
+{
+    NvAPI_Status ret;
+
+    // Retrieve the display path information
+    NvU32 pathCount							= 0;
+    NV_DISPLAYCONFIG_PATH_INFO *pathInfo	= NULL;
+
+    ret = NvAPI_DISP_GetDisplayConfig(&pathCount, NULL);
+    if (ret != NVAPI_OK)    return ret;
+
+    pathInfo = (NV_DISPLAYCONFIG_PATH_INFO*) malloc(pathCount * sizeof(NV_DISPLAYCONFIG_PATH_INFO));
+    if (!pathInfo)
+    {
+        return NVAPI_OUT_OF_MEMORY;
     }
 
-    // 第一次调用获取路径数量
-    NvAPI_Status status = NvAPI_DISP_GetDisplayConfig(pathCount, nullptr);
-    if (status != NVAPI_OK) {
-        return status;
+    memset(pathInfo, 0, pathCount * sizeof(NV_DISPLAYCONFIG_PATH_INFO));
+    for (NvU32 i = 0; i < pathCount; i++)
+    {
+        pathInfo[i].version = NV_DISPLAYCONFIG_PATH_INFO_VER;
     }
 
-    // 分配内存
-    *pathInfo = new NV_DISPLAYCONFIG_PATH_INFO_V2[*pathCount];
-    memset(*pathInfo, 0, sizeof(NV_DISPLAYCONFIG_PATH_INFO_V2) * (*pathCount));
-    for (NvU32 i = 0; i < *pathCount; ++i) {
-        (*pathInfo)[i].version = NV_DISPLAYCONFIG_PATH_INFO_VER2;
+    // Retrieve the targetInfo counts
+    ret = NvAPI_DISP_GetDisplayConfig(&pathCount, pathInfo);
+    if (ret != NVAPI_OK)
+    {
+        return ret;
     }
 
-    // 第二次调用获取详细配置
-    status = NvAPI_DISP_GetDisplayConfig(pathCount, *pathInfo);
-    if (status != NVAPI_OK) {
-        delete[] *pathInfo;
-        *pathInfo = nullptr;
+    for (NvU32 i = 0; i < pathCount; i++)
+    {
+        // Allocate the source mode info
+
+        if(pathInfo[i].version == NV_DISPLAYCONFIG_PATH_INFO_VER1 || pathInfo[i].version == NV_DISPLAYCONFIG_PATH_INFO_VER2)
+        {
+            pathInfo[i].sourceModeInfo = (NV_DISPLAYCONFIG_SOURCE_MODE_INFO*) malloc(sizeof(NV_DISPLAYCONFIG_SOURCE_MODE_INFO));
+        }
+        else
+        {
+
+#ifdef NV_DISPLAYCONFIG_PATH_INFO_VER3
+            pathInfo[i].sourceModeInfo = (NV_DISPLAYCONFIG_SOURCE_MODE_INFO*) malloc(pathInfo[i].sourceModeInfoCount * sizeof(NV_DISPLAYCONFIG_SOURCE_MODE_INFO));
+#endif
+
+        }
+        if (pathInfo[i].sourceModeInfo == NULL)
+        {
+            return NVAPI_OUT_OF_MEMORY;
+        }
+        memset(pathInfo[i].sourceModeInfo, 0, sizeof(NV_DISPLAYCONFIG_SOURCE_MODE_INFO));
+
+        // Allocate the target array
+        pathInfo[i].targetInfo = (NV_DISPLAYCONFIG_PATH_TARGET_INFO*) malloc(pathInfo[i].targetInfoCount * sizeof(NV_DISPLAYCONFIG_PATH_TARGET_INFO));
+        if (pathInfo[i].targetInfo == NULL)
+        {
+            return NVAPI_OUT_OF_MEMORY;
+        }
+        // Allocate the target details
+        memset(pathInfo[i].targetInfo, 0, pathInfo[i].targetInfoCount * sizeof(NV_DISPLAYCONFIG_PATH_TARGET_INFO));
+        for (NvU32 j = 0 ; j < pathInfo[i].targetInfoCount ; j++)
+        {
+            pathInfo[i].targetInfo[j].details = (NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO*) malloc(sizeof(NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO));
+            memset(pathInfo[i].targetInfo[j].details, 0, sizeof(NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO));
+            pathInfo[i].targetInfo[j].details->version = NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_VER;
+        }
     }
 
-    return status;
+    // Retrieve the full path info
+    ret = NvAPI_DISP_GetDisplayConfig(&pathCount, pathInfo);
+    if (ret != NVAPI_OK)
+    {
+        return ret;
+    }
+
+    *pathInfoCount = pathCount;
+    *pPathInfo = pathInfo;
+    return NVAPI_OK;
 }
 
 int GraphicsConfigManager::getVSyncMode() {
@@ -1092,16 +1157,7 @@ QByteArray GraphicsConfigManager::getScalingMode() {
     }
 
     // 内存清理
-    for (NvU32 i = 0; i < deviceCount; ++i) {
-        delete pathInfo[i].sourceModeInfo;
-        if (pathInfo[i].targetInfo) {
-            for (NvU32 j = 0; j < pathInfo[i].targetInfoCount; ++j) {
-                delete pathInfo[i].targetInfo[j].details;
-            }
-            delete[] pathInfo[i].targetInfo;
-        }
-    }
-    delete[] pathInfo;
+    FreeDisplayConfigResources(pathInfo, deviceCount);
 
     root["devices"] = devicesArray;
     return QJsonDocument(root).toJson();
@@ -1134,12 +1190,36 @@ void GraphicsConfigManager::setScalingMode(const QByteArray& params)
     // 查找匹配的displayId
     for (NvU32 i = 0; i < pathCount; ++i) {
         for (NvU32 j = 0; j < pathInfo[i].targetInfoCount; ++j) {
-            if (pathInfo[i].targetInfo[j].displayId == displayId) {
-                // 设置缩放模式
-                pathInfo[i].targetInfo[j].details->scaling = (NV_SCALING)mode;
+            if (pathInfo[i].targetInfo[j].displayId == displayId) {//隐式转换不用管
+#if 0
+                // 创建只包含目标显示器的配置
+                NV_DISPLAYCONFIG_PATH_INFO singlePathInfo;
+                memcpy(&singlePathInfo, &pathInfo[i], sizeof(NV_DISPLAYCONFIG_PATH_INFO));
                 
+                // 为targetInfo分配新内存并深度拷贝
+                singlePathInfo.targetInfo = new NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2[1];
+                memcpy(singlePathInfo.targetInfo, &pathInfo[i].targetInfo[j], sizeof(NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2));
+                
+                // 为details分配新内存并深度拷贝
+                singlePathInfo.targetInfo[0].details = new NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1();
+                memcpy(singlePathInfo.targetInfo[0].details, pathInfo[i].targetInfo[j].details, sizeof(NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1));
+                
+                // 只在拷贝后的结构体上设置缩放模式
+                singlePathInfo.targetInfo[0].details->scaling = (NV_SCALING)mode;
+                singlePathInfo.targetInfoCount = 1;
+
+                //释放内存
+                delete singlePathInfo.targetInfo[0].details;
+                delete[] singlePathInfo.targetInfo;
+
                 // 应用配置
-                status = NvAPI_DISP_SetDisplayConfig(pathCount, pathInfo, 0);
+                status = NvAPI_DISP_SetDisplayConfig(1, &singlePathInfo, NV_DISPLAYCONFIG_SAVE_TO_PERSISTENCE);
+#else \
+                // 直接在原pathInfo数组上设置缩放模式
+                pathInfo[i].targetInfo[j].details->scaling = (NV_SCALING)mode;
+
+                status = NvAPI_DISP_SetDisplayConfig(pathCount, pathInfo, NV_DISPLAYCONFIG_SAVE_TO_PERSISTENCE);
+#endif
                 if (status != NVAPI_OK) {
                     qWarning() << "设置缩放模式失败，错误码:" << status;
                 }
@@ -1149,15 +1229,6 @@ void GraphicsConfigManager::setScalingMode(const QByteArray& params)
     }
 
     // 释放内存
-    for (NvU32 i = 0; i < pathCount; ++i) {
-        delete pathInfo[i].sourceModeInfo;
-        if (pathInfo[i].targetInfo) {
-            for (NvU32 j = 0; j < pathInfo[i].targetInfoCount; ++j) {
-                delete pathInfo[i].targetInfo[j].details;
-            }
-            delete[] pathInfo[i].targetInfo;
-        }
-    }
-    delete[] pathInfo;
+    FreeDisplayConfigResources(pathInfo, pathCount);
 }
 

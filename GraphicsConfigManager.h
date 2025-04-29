@@ -48,6 +48,7 @@ public:
     NvAPI_Status CheckDisplayConfig();
     //申请内存并获取显示器设置
     NvAPI_Status AllocateAndGetDisplayConfig(NvU32* pathCount, NV_DISPLAYCONFIG_PATH_INFO_V2** pathInfo);
+    void FreeDisplayConfigResources(NV_DISPLAYCONFIG_PATH_INFO_V2* pathInfo, NvU32 pathCount);
 public:
     static bool initializeNvAPI();
     static void shutdownNvAPI();
