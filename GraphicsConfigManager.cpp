@@ -177,7 +177,7 @@ NVDRS_SETTING GraphicsConfigManager::queryNvidiaSetting(const wchar_t* settingNa
     setting.settingType = NVDRS_DWORD_TYPE;
     status = NvAPI_DRS_GetSetting(globalSession, hProfile, settingId, &setting);
     if (status != NVAPI_OK) {
-        qWarning() << "NvAPI_DRS_GetSetting failed with error:" << status;
+        qWarning() << "NvAPI_DRS_GetSetting failed with error:" << status << " string:"<<QString::fromWCharArray(settingName);
     }
 
     return setting;
@@ -1230,5 +1230,6 @@ void GraphicsConfigManager::setScalingMode(const QByteArray& params)
 
     // 释放内存
     FreeDisplayConfigResources(pathInfo, pathCount);
+    emit scalingModeChanged();
 }
 

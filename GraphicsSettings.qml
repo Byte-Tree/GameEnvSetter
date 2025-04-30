@@ -206,16 +206,15 @@ GroupBox {
                         title: "调整桌面尺寸和位置"
                         ColumnLayout {
                             spacing: 8
-                            RowLayout { Label { text: "选择缩放模式" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "屏幕缩放模式。" } 
+                            RowLayout { Label { text: "选择缩放模式" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "屏幕缩放模式。" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "\"GPU\"和\"显示器\"前缀的意思是：缩放画面这个事er,是由谁来处理的。GPU来处理缩放后的图像，没有投放延迟，但是影响帧数，推荐GPU来处理。显示器来处理缩放后的图像，会有5ms的投放延迟，但是不会降低帧数。" } 
                                 ComboBox {
                                     id: displayIdCombo
                                     model: [] // 初始模型为空
                                     onActivated: updateScalingModeCombo // 选择项变化时触发更新缩放模式
+                                    property var scalingData: JSON.parse(graphicsConfig.scalingMode)
                                     
                                     // 组件完成时初始化显示器ID列表
                                     Component.onCompleted: {
-                                        // 从配置获取缩放模式数据并解析为JSON
-                                        var scalingData = JSON.parse(graphicsConfig.getScalingMode());
                                         var displayIds = [];
                                         
                                         // 遍历所有设备的目标显示器ID
@@ -237,7 +236,6 @@ GroupBox {
                                     
                                     // 根据选择的显示器索引更新缩放模式下拉框
                                     function updateScalingModeCombo(displayIndex) {
-                                        var scalingData = JSON.parse(graphicsConfig.getScalingMode());
                                         var scalingValue = 0;
 
                                         // 查找对应显示器的缩放值
@@ -258,29 +256,35 @@ GroupBox {
                                 // 缩放模式选择下拉框
                                 ComboBox {
                                     id: scalingModeCombo
-                                    model: ["无缩放:0或3", "纵横比:5或6", "全屏:1或2"] // 三种缩放模式选项
+                                    model: ["默认值/跟随应用程序:0","GPU->无缩放:3", "GPU->纵横比:5", "GPU->全屏:2","GPU->整数缩放:8","显示器->无缩放:7", "显示器->纵横比:6", "显示器->全屏:1"] // 6种缩放模式选项,实际上有7种
                                     
                                     // 将缩放值映射到下拉框索引
                                     function mapScalingValue(scaling) {
                                         switch(scaling) {
-                                            case 0:
-                                            case 3: return 0; // 无缩放模式
-                                            case 5:
-                                            case 6: return 1; // 保持纵横比模式
-                                            case 1:
-                                            case 2: return 2; // 全屏模式
+                                            case 0: return 0; // 跟随应用程序
+                                            case 3: return 1; // GPU->无缩放
+                                            case 5: return 2; // GPU->纵横比
+                                            case 2: return 3; // GPU->全屏
+                                            case 8: return 4; // GPU->整数缩放
+                                            case 7: return 5; // 显示器->无缩放
+                                            case 6: return 6; // 显示器->纵横比
+                                            case 1: return 7; // 显示器->全屏
                                             default: return 0;
                                         }
-                                        return 0; // 默认无缩放
                                     }
                                     
                                     // 当选择缩放模式时更新配置
                                     onActivated: function(index) {
                                         var scalingValue = 0;
                                         switch(index) {
-                                            case 0: scalingValue = 3; break;//我电脑是这个数值，我就按照这个为标准来设置了
-                                            case 1: scalingValue = 5; break;
-                                            case 2: scalingValue = 2; break;
+                                            case 0: scalingValue = 0; break;
+                                            case 1: scalingValue = 3; break;
+                                            case 2: scalingValue = 5; break;
+                                            case 3: scalingValue = 2; break;
+                                            case 4: scalingValue = 8; break;
+                                            case 5: scalingValue = 7; break;
+                                            case 6: scalingValue = 6; break;
+                                            case 7: scalingValue = 1; break;
                                         }
                                         var params = {};
                                         params["displayId"] = displayIdCombo.model[displayIdCombo.currentIndex];
@@ -290,6 +294,8 @@ GroupBox {
                                 }
 
                             }
+
+
                             
                         }
 
