@@ -79,10 +79,10 @@ GroupBox {
         Button {
             text: "推荐设置"
             ToolTip.visible: hovered
-            ToolTip.text: "推荐设置：双击速度300ms，移动速度10级，关闭指针精确度"
+            ToolTip.text: "推荐设置：双击速度100ms，移动速度10级，关闭指针精确度"
             ToolTip.delay: 200
             onClicked: {
-                mouseConfig.setDoubleClickSpeed(300)
+                mouseConfig.setDoubleClickSpeed(100)
                 mouseConfig.setMouseSpeed(10)
                 mouseConfig.setEnhancePointerPrecision(false)
             }

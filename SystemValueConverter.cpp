@@ -1,4 +1,8 @@
 #include "SystemValueConverter.h"
+#include <dxgi.h>
+#include <wrl/client.h>
+
+using namespace Microsoft::WRL;
 
 SystemValueConverter::SystemValueConverter(QObject* parent) : QObject(parent) {}
 
@@ -50,4 +54,33 @@ QVariant SystemValueConverter::convertToRegistryFormat(const QString& value) {
     uint decValue = str.toUInt(&ok);
     if(!ok) return QVariant::fromValue(QString("无效的十进制值"));
     return QVariant(decValue);
+}
+
+QString SystemValueConverter::getGPUVendor() {
+    ComPtr<IDXGIFactory> pFactory;
+    if (FAILED(CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)&pFactory))) {
+        return "Unknown";
+    }
+
+    ComPtr<IDXGIAdapter> pAdapter;
+    if (FAILED(pFactory->EnumAdapters(0, &pAdapter))) {
+        return "Unknown";
+    }
+
+    DXGI_ADAPTER_DESC desc;
+    if (FAILED(pAdapter->GetDesc(&desc))) {
+        return "Unknown";
+    }
+
+    QString vendorName = QString::fromWCharArray(desc.Description);
+    if (vendorName.contains("NVIDIA", Qt::CaseInsensitive)) {
+        return "NVIDIA";
+    } else if (vendorName.contains("AMD", Qt::CaseInsensitive) || 
+               vendorName.contains("ATI", Qt::CaseInsensitive)) {
+        return "AMD";
+    } else if (vendorName.contains("Intel", Qt::CaseInsensitive)) {
+        return "Intel";
+    }
+
+    return "Unknown";
 }

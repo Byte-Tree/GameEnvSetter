@@ -60,7 +60,7 @@ GroupBox {
         Button {
             text: "推荐设置"
             ToolTip.visible: hovered
-            ToolTip.text: "推荐设置：38(平衡前后台优先级)"
+            ToolTip.text: "推荐设置：38(提高前台优先级，降低后台优先级)，备选：2 22 26 28 38 40 42"
             ToolTip.delay: 200
             onClicked: {
                 registryOperator.setWin32PrioritySeparation(38)

@@ -16,6 +16,11 @@ public:
     Q_INVOKABLE void saveUserConfig(const QVariantMap &config, const QString &path);
     Q_INVOKABLE QVariantMap loadFromPath(const QString &filePath) const;
     Q_INVOKABLE QVariantMap loadConfig() const;
+
+private:
+    void saveCommonSettings(QSettings &settings, const QVariantMap &config);
+    void saveGraphicsSettings(QSettings &settings, const QVariantMap &config);
+    void handleSaveResult(QSettings &settings);
     
 signals:
     void errorOccurred(const QString &msg) const;

@@ -3,10 +3,15 @@ import QtQuick.Controls
 import QtQuick.Layouts 1.15
 
 GroupBox {
+    id: graphicsSettingsRoot
     title: "显卡设置"
     Layout.fillWidth: true
     implicitHeight: 1150
+    property string gpuVendor
 
+    Component.onCompleted: {
+        console.log("GraphicsSettings.qml中gpuVendor的值: " + gpuVendor);
+    }
     ColumnLayout {
         width: parent.width
         spacing: 10
@@ -16,21 +21,45 @@ GroupBox {
             Layout.fillWidth: true
             currentIndex: swipeView.currentIndex
 
-            TabButton { text: "NVIDIA" }
-            TabButton { text: "AMD" }
-            TabButton { text: "Intel" }
+            // 未知厂商时禁用所有标签
+            onCurrentIndexChanged: { if(currentIndex === -1) { nvidiaTab.enabled = false; amdTab.enabled = false; intelTab.enabled = false; } }
+
+            TabButton { 
+                id: nvidiaTab
+                text: "NVIDIA" 
+                enabled: gpuVendor === "NVIDIA"
+            }
+            TabButton { 
+                id: amdTab
+                text: "AMD" 
+                enabled: gpuVendor === "AMD"
+            }
+            TabButton { 
+                id: intelTab
+                text: "Intel" 
+                enabled: gpuVendor === "Intel"
+            }
         }
+
+
 
         SwipeView {
             id: swipeView
             Layout.fillWidth: true
             Layout.fillHeight: true
-            currentIndex: gpuTabBar.currentIndex
+            currentIndex: gpuVendor === "NVIDIA" ? 0 : (gpuVendor === "AMD" ? 1 : (gpuVendor === "Intel" ? 2 : 3))
 
-            Item {
-                ColumnLayout {
-                    width: parent.width
-                    Label { text: "NVIDIA 显卡设置"; font.bold: true }
+            Loader {
+                id: nvidiaSettingsLoader
+                width: parent.width
+                active: gpuVendor === "NVIDIA"
+                sourceComponent: nvidiaSettingsComponent
+                
+                Component {
+                    id: nvidiaSettingsComponent
+                    ColumnLayout {
+                        width: parent.width
+                        Label { text: "NVIDIA 显卡设置"; font.bold: true }
                     
                     GroupBox {
                         Layout.fillWidth: true
@@ -39,30 +68,30 @@ GroupBox {
                             spacing: 8
                             RowLayout { Label { text: "图形增强" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "用AI提高帧数（适合看风景，但会加剧远处模糊感）。" }
                                 ComboBox { model: ["未知","关", "开"];
-                                    currentIndex: graphicsConfig.imageSharpening; onActivated: function(index) { graphicsConfig.setImageSharpening(index) } } }
+                                    currentIndex: nvidiaGraphicsConfig.imageSharpening; onActivated: function(index) { nvidiaGraphicsConfig.setImageSharpening(index) } } }
                             RowLayout { Label { text: "CUDA - GPUs" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "多显卡默认配置。" } ComboBox { enabled: false; } }
                             RowLayout { Label { text: "CUDA - 系统内存回退政策" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "显存不足时使用内存补充。" } ComboBox { enabled: false; model: ["驱动默认值", "偏好无系统内存回退", "偏好系统内存回退"]; } }
                             RowLayout { Label { text: "DSR - 因数" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "伪分辨率技术（适合看风景）。" } ComboBox { enabled: false; model: [] } }
                             RowLayout { Label { text: "OpenGL GDI兼容性" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "对老旧游戏的优化。" }
                                 ComboBox { model: ["未知","优先性能","优先兼容性","自动"];
-                                    currentIndex: graphicsConfig.openGLGDICompatibility; onActivated: function(index) { graphicsConfig.setOpenGLGDICompatibility(index) } } }
-                            RowLayout { Label { text: "OpenGL 渲染GPU" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "多显卡模式下选择需使用的GPU。" } ComboBox { model: [] } }
+                                    currentIndex: nvidiaGraphicsConfig.openGLGDICompatibility; onActivated: function(index) { nvidiaGraphicsConfig.setOpenGLGDICompatibility(index) } } }
+                            RowLayout { Label { text: "OpenGL 渲染GPU" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "多显卡模式下选择需使用的GPU。" } ComboBox { enabled: false; } }
                             RowLayout { Label { text: "Vulkan/OpenGL 现行方法" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "针对第9代及以后CPU使用DX12的优化。" }
                                 ComboBox { model: ["未知","优先本机","优先在DIGX交换链上分层","自动"];
-                                    currentIndex: graphicsConfig.openGLPresentMethod; onActivated: function(index) { graphicsConfig.setOpenGLPresentMethod(index) } } }
+                                    currentIndex: nvidiaGraphicsConfig.openGLPresentMethod; onActivated: function(index) { nvidiaGraphicsConfig.setOpenGLPresentMethod(index) } } }
                             RowLayout { Label { text: "三重缓冲" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "减少画面撕裂（适合看风景，但增加输入延迟）。" }
                                 ComboBox { model: ["未知","关","开"];
-                                    currentIndex: graphicsConfig.tripleBuffer; onActivated: function(index) { graphicsConfig.setTripleBuffer(index) } } }
+                                    currentIndex: nvidiaGraphicsConfig.tripleBuffer; onActivated: function(index) { nvidiaGraphicsConfig.setTripleBuffer(index) } } }
                             RowLayout { Label { text: "低延时模式" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "提高画面反馈速度（中低端显卡可能帧数波动）。" }
                                 ComboBox { model: ["未知","关","开(超高)"]
-                                    currentIndex: graphicsConfig.lowLatencyMode
-                                    onActivated: function(index) { graphicsConfig.setLowLatencyMode(index) }
+                                    currentIndex: nvidiaGraphicsConfig.lowLatencyMode
+                                    onActivated: function(index) { nvidiaGraphicsConfig.setLowLatencyMode(index) }
                                 } }
                             RowLayout { Label { text: "各向异性过滤" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "提升远处物体清晰度（显卡性能越高可设置越高）。" } 
                                 ComboBox { 
                                     model: Array.from({length: 16}, (_, i) => i+1);
-                                    currentIndex: graphicsConfig.anisotropicFiltering;
-                                    onActivated: function(index) { graphicsConfig.setAnisotropicFiltering(index) } 
+                                    currentIndex: nvidiaGraphicsConfig.anisotropicFiltering;
+                                    onActivated: function(index) { nvidiaGraphicsConfig.setAnisotropicFiltering(index) }
                                 } 
                             }
                             RowLayout {
@@ -77,8 +106,8 @@ GroupBox {
                                     from: 0
                                     to: 1023
                                     stepSize: 1
-                                    value: graphicsConfig.appIdleFPSLimit
-                                    onMoved: graphicsConfig.setAppIdleFPSLimit(value)
+                                    value: nvidiaGraphicsConfig.appIdleFPSLimit
+                                    onMoved: nvidiaGraphicsConfig.setAppIdleFPSLimit(value)
                                     Layout.fillWidth: true
                                 }
                                 Text {
@@ -88,43 +117,43 @@ GroupBox {
                             }
                             RowLayout { Label { text: "垂直同步" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "同步GPU渲染速率与显示器刷新率（适合看风景）。" }
                                 ComboBox { model: ["未知","使用3D应用程序设置","关", "开","VSYNCMODE_FLIPINTERVAL2","VSYNCMODE_FLIPINTERVAL3","VSYNCMODE_FLIPINTERVAL4","VSYNCMODE_VIRTUAL"];
-                                    currentIndex: graphicsConfig.vSyncMode; onActivated: function(index) { graphicsConfig.setVSyncMode(index) } } }
+                                    currentIndex: nvidiaGraphicsConfig.vSyncMode; onActivated: function(index) { nvidiaGraphicsConfig.setVSyncMode(index) } } }
                             // RowLayout { Label { text: "多重采样" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "提升画面细腻度（3060以下显卡建议关闭）。" }
                             //     ComboBox {
                             //         model: ["关", "2x", "4x", "8x", "16x"]
-                            //         currentIndex: graphicsConfig.aaModeMethod
-                            //         onActivated: function(index) {graphicsConfig.setAAModeMethod(index)}
+                            //         currentIndex: nvidiaGraphicsConfig.aaModeMethod
+                            //         onActivated: function(index) {nvidiaGraphicsConfig.setAAModeMethod(index)}
                             //     }
                             // }
                             RowLayout { Label { text: "平滑处理 - FXAA" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "消除物体边缘锯齿。" } 
                                 ComboBox { 
                                     model: ["未知","关","开"]
-                                    currentIndex: graphicsConfig.fxaaEnable
-                                    onActivated: function(index) {graphicsConfig.setFXAAEnable(index)}
+                                    currentIndex: nvidiaGraphicsConfig.fxaaEnable
+                                    onActivated: function(index) {nvidiaGraphicsConfig.setFXAAEnable(index)}
                                 } 
                             }
                             RowLayout { Label { text: "平滑处理 - 模式" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "抗锯齿模式选择。" }
                                 ComboBox {
                                     model: ["应用程序控制的","关","提高应用程序设置","置换任何应用程序设置"];
-                                    currentIndex: graphicsConfig.aaModeSelector;
-                                    onActivated: function(index) { graphicsConfig.setAAModeSelector(index) }
+                                    currentIndex: nvidiaGraphicsConfig.aaModeSelector;
+                                    onActivated: function(index) { nvidiaGraphicsConfig.setAAModeSelector(index) }
                                 } }
                             RowLayout { Label { text: "平滑处理 - 灰度纠正" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "优化画面对比度。" } 
                                 ComboBox { 
                                     model: ["关", "条件开启", "始终开启"]
-                                    currentIndex: graphicsConfig.aaGammaCorrection
-                                    onActivated: function(index) {graphicsConfig.setAAGammaCorrection(index)}
+                                    currentIndex: nvidiaGraphicsConfig.aaGammaCorrection
+                                    onActivated: function(index) {nvidiaGraphicsConfig.setAAGammaCorrection(index)}
                                 } 
                             }
                             RowLayout { Label { text: "平滑处理 - 设置（多重采样）" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "托管对象的抗锯齿处理。提升画面细腻度（3060以下显卡建议关闭）。" }
                                 ComboBox { 
                                     model: ["应用程序控制的(关)", "2x", "4x","8x","16x"]
-                                    currentIndex: graphicsConfig.aaModeMethod
-                                    onActivated: function(index) {graphicsConfig.setAAModeMethod(index)}
+                                    currentIndex: nvidiaGraphicsConfig.aaModeMethod
+                                    onActivated: function(index) {nvidiaGraphicsConfig.setAAModeMethod(index)}
                                 } }
                             RowLayout { Label { text: "平滑处理 - 透明度" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "提升细节物体清晰度（显卡性能越高可设置越高，影响帧数）。" } ComboBox { model: ["关", "多重采样", "超级采样(2x)", "超级采样(4x)","超级采样(8x)"]
-                                currentIndex: graphicsConfig.aaTransparency
-                                onActivated: function(index) {graphicsConfig.setAATransparency(index)}
+                                currentIndex: nvidiaGraphicsConfig.aaTransparency
+                                onActivated: function(index) {nvidiaGraphicsConfig.setAATransparency(index)}
                                 } }
                             RowLayout { 
                                 Label { text: "最大帧速率" }
@@ -138,8 +167,8 @@ GroupBox {
                                     from: 0
                                     to: 1023
                                     stepSize: 1
-                                    value: graphicsConfig.maxFPSLimit
-                                    onMoved: graphicsConfig.setMaxFPSLimit(value)
+                                    value: nvidiaGraphicsConfig.maxFPSLimit
+                                    onMoved: nvidiaGraphicsConfig.setMaxFPSLimit(value)
                                     Layout.fillWidth: true
                                 }
                                 Text {
@@ -150,12 +179,12 @@ GroupBox {
                             RowLayout { Label { text: "环境光吸收" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "优化画面光影效果。" }
                                 ComboBox { 
                                     model: ["关","性能(低)","质量(中)","高"]
-                                    currentIndex: graphicsConfig.aoMode
-                                    onActivated: graphicsConfig.setAoMode(index)
+                                    currentIndex: nvidiaGraphicsConfig.aoMode
+                                    onActivated: nvidiaGraphicsConfig.setAoMode(index)
                                 } }
                             RowLayout { Label { text: "电源管理模式" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "控制显卡功耗策略（游戏推荐最大性能）。" } 
                                 ComboBox { model: ["未知","自适应","最大性能","驱动控制","一致性能","最小功耗","最优电源"];
-                                    currentIndex: graphicsConfig.powerManagementMode; onActivated: function(index) { graphicsConfig.setPowerManagementMode(index) } }}
+                                    currentIndex: nvidiaGraphicsConfig.powerManagementMode; onActivated: function(index) { nvidiaGraphicsConfig.setPowerManagementMode(index) } }}
                             RowLayout { 
                                 Label { text: "着色器缓存大小" }
                                 Button { 
@@ -164,7 +193,7 @@ GroupBox {
                                     ToolTip.text: "显存足够时可设为无限制(即：4,294,967,295)。"
                                 }
                                 Text {
-                                    text: "当前值：" + graphicsConfig.shaderCacheSize + "MB"
+                                    text: "当前值：" + nvidiaGraphicsConfig.shaderCacheSize + "MB"
                                     Layout.alignment: Qt.AlignRight
                                 }
                                 TextField {
@@ -173,31 +202,47 @@ GroupBox {
                                 }
                                 Button {
                                     text: "设置"
-                                    onClicked: graphicsConfig.setShaderCacheSize(parent.children[3].text)
+                                    onClicked: nvidiaGraphicsConfig.setShaderCacheSize(parent.children[3].text)
                                 }
                             }
                             RowLayout { Label { text: "纹理过滤 - 三线性优化" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "动态降低远处清晰度。" }
                                 ComboBox { model: ["开","关"]
-                                    currentIndex: graphicsConfig.trilinearOptimization
-                                    onActivated: function(index) { graphicsConfig.setTrilinearOptimization(index) } } }
+                                    currentIndex: nvidiaGraphicsConfig.trilinearOptimization
+                                    onActivated: function(index) { nvidiaGraphicsConfig.setTrilinearOptimization(index) } } }
                             RowLayout { Label { text: "纹理过滤 - 各向异性采样优化" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "动态降低被遮挡物清晰度（可能停止绘制进程）。" } 
                                 ComboBox { model: ["关","开"]
-                                    currentIndex: graphicsConfig.anisotropicSampleOptimization
-                                    onActivated: function(index) { graphicsConfig.setAnisotropicSampleOptimization(index) }
+                                    currentIndex: nvidiaGraphicsConfig.anisotropicSampleOptimization
+                                    onActivated: function(index) { nvidiaGraphicsConfig.setAnisotropicSampleOptimization(index) }
                                 } }
                             RowLayout { Label { text: "纹理过滤 - 负LOD偏移" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "是否动态调节细节物体清晰度。" } ComboBox {
-                                    model: ["允许","锁定"]; currentIndex: graphicsConfig.negativeLODBias; onActivated: function(index) { graphicsConfig.setNegativeLODBias(index) } } }
+                                    model: ["允许","锁定"]; currentIndex: nvidiaGraphicsConfig.negativeLODBias; onActivated: function(index) { nvidiaGraphicsConfig.setNegativeLODBias(index) } } }
                             RowLayout { Label { text: "纹理过滤 - 质量" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "画质与帧数平衡（质量：画质+10%；高性能：帧数+20%）。" } 
                                 ComboBox { 
                                     model: ["高质量", "质量", "性能", "高性能"]
-                                    currentIndex: graphicsConfig.textureFilterQuality
-                                    onActivated: function(index) { graphicsConfig.setTextureFilterQuality(index) }
+                                    currentIndex: nvidiaGraphicsConfig.textureFilterQuality
+                                    onActivated: function(index) { nvidiaGraphicsConfig.setTextureFilterQuality(index) }
                                 } }
                             RowLayout { Label { text: "线程优化" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "优化多核CPU性能。" } ComboBox { 
                                 model: ["自动", "开", "关"];
-                                currentIndex: graphicsConfig.threadControl;
-                                onActivated: function(index) { graphicsConfig.setThreadControl(index) }
+                                currentIndex: nvidiaGraphicsConfig.threadControl;
+                                onActivated: function(index) { nvidiaGraphicsConfig.setThreadControl(index) }
                             } }
+                            Button {
+                                text: "推荐设置"
+                                ToolTip.visible: hovered
+                                ToolTip.text: "推荐设置：低延时模式开(超高)，三重缓冲关，各向异性过滤16x，最大帧速率240，垂直同步关，电源管理模式最大性能，纹理过滤质量高性能，线程优化开"
+                                ToolTip.delay: 200
+                                onClicked: {
+                                    nvidiaGraphicsConfig.setLowLatencyMode(2);
+                                    nvidiaGraphicsConfig.setTripleBuffer(1);
+                                    nvidiaGraphicsConfig.setAnisotropicFiltering(15);
+                                    nvidiaGraphicsConfig.setMaxFPSLimit(240);
+                                    nvidiaGraphicsConfig.setVSyncMode(2);
+                                    nvidiaGraphicsConfig.setPowerManagementMode(2);
+                                    nvidiaGraphicsConfig.setTextureFilterQuality(3);
+                                    nvidiaGraphicsConfig.setThreadControl(1);
+                                }
+                            }
                         }
                     }
                     
@@ -211,7 +256,7 @@ GroupBox {
                                     id: displayIdCombo
                                     model: [] // 初始模型为空
                                     onActivated: updateScalingModeCombo // 选择项变化时触发更新缩放模式
-                                    property var scalingData: JSON.parse(graphicsConfig.scalingMode)
+                                    property var scalingData: JSON.parse(nvidiaGraphicsConfig.scalingMode)
                                     
                                     // 组件完成时初始化显示器ID列表
                                     Component.onCompleted: {
@@ -289,7 +334,7 @@ GroupBox {
                                         var params = {};
                                         params["displayId"] = displayIdCombo.model[displayIdCombo.currentIndex];
                                         params["mode"] = scalingValue;
-                                        graphicsConfig.setScalingMode(Qt.btoa(JSON.stringify(params)));
+                                        nvidiaGraphicsConfig.setScalingMode(Qt.btoa(JSON.stringify(params)));
                                     }
                                 }
 
@@ -301,29 +346,54 @@ GroupBox {
 
                     }
                     
-                    GroupBox {
-                        Layout.fillWidth: true
-                        title: "基础设置"
-                        ColumnLayout {
-                            spacing: 8
-                            RowLayout { Label { text: "分辨率" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "屏幕分辨率适配。" } ComboBox { model: [] } }
-                            RowLayout { Label { text: "刷新率" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "显示器刷新率。" } ComboBox { model: [] } }
+                }
+            }
+            }
+
+            Loader {
+                id: amdSettingsLoader
+                width: parent.width
+                active: gpuVendor === "AMD"
+                sourceComponent: amdSettingsComponent
+                
+                Component {
+                    id: amdSettingsComponent
+                    Item {
+                        Label {
+                            anchors.centerIn: parent
+                            text: "AMD设置等待更新"
+                        }
+                    }
+                }
+            }
+
+            Loader {
+                id: intelSettingsLoader
+                width: parent.width
+                active: gpuVendor === "Intel"
+                sourceComponent: intelSettingsComponent
+                
+                Component {
+                    id: intelSettingsComponent
+                    Item {
+                        Label {
+                            anchors.centerIn: parent
+                            text: "Intel设置等待更新"
                         }
                     }
                 }
             }
 
             Item {
-                Label {
+                ColumnLayout {
+                    width: parent.width
                     anchors.centerIn: parent
-                    text: "AMD设置等待更新"
-                }
-            }
-
-            Item {
-                Label {
-                    anchors.centerIn: parent
-                    text: "Intel设置等待更新"
+                    Label {
+                        text: "未检测到已知的显卡厂商"
+                        color: "gray"
+                        font.pixelSize: 16
+                        Layout.alignment: Qt.AlignHCenter
+                    }
                 }
             }
         }

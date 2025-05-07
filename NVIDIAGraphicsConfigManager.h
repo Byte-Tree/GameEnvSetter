@@ -4,7 +4,7 @@
 #include <QtCore/QVariant>
 #include "nvapi.h"
 
-class GraphicsConfigManager : public QObject {
+class NVIDIAGraphicsConfigManager : public QObject {
     Q_OBJECT
     Q_PROPERTY(int imageSharpening READ getImageSharpeningStatus WRITE setImageSharpening NOTIFY imageSharpeningChanged)
     Q_PROPERTY(int vSyncMode READ getVSyncMode WRITE setVSyncMode NOTIFY vSyncModeChanged)

@@ -6,7 +6,8 @@
 #include "RegistryOperator.h"
 #include "SystemValueConverter.h"
 #include "ConfigManager.h"
-#include "GraphicsConfigManager.h"
+#include "NVIDIAGraphicsConfigManager.h"
+#include "DisplayConfigManager.h"
 
 int main(int argc, char *argv[])
 {
@@ -16,7 +17,8 @@ int main(int argc, char *argv[])
     qmlRegisterType<KeyboardConfigManager>("ConfigManagers", 1, 0, "KeyboardConfigManager");
     qmlRegisterType<RegistryOperator>("ConfigManagers", 1, 0, "RegistryOperator");
     qmlRegisterType<ConfigManager>("ConfigManagers", 1, 0, "ConfigManager");
-    qmlRegisterType<GraphicsConfigManager>("ConfigManagers", 1, 0, "GraphicsConfigManager");
+    qmlRegisterType<NVIDIAGraphicsConfigManager>("ConfigManagers", 1, 0, "NVIDIAGraphicsConfigManager");
+    qmlRegisterType<DisplayConfigManager>("ConfigManagers", 1, 0, "DisplayConfigManager");
 
     qmlRegisterSingletonType<SystemValueConverter>(
         "SystemValueConverter", // URI
@@ -38,7 +40,7 @@ int main(int argc, char *argv[])
         Qt::QueuedConnection);
     engine.load(url);
 
-    QObject::connect(&app, &QCoreApplication::aboutToQuit, &GraphicsConfigManager::shutdownNvAPI);
+    QObject::connect(&app, &QCoreApplication::aboutToQuit, &NVIDIAGraphicsConfigManager::shutdownNvAPI);
 
     return app.exec();
 }

@@ -1,4 +1,4 @@
-#include "GraphicsConfigManager.h"
+#include "NVIDIAGraphicsConfigManager.h"
 
 #include <QtCore/QThread>
 #include <QtCore/QDebug>
@@ -13,17 +13,17 @@
 #define NVAPI_BINARY_DATA_MAX_SIZE 4096
 
 // 静态成员初始化
-bool GraphicsConfigManager::isNvAPIInitialized = false;
-NvDRSSessionHandle GraphicsConfigManager::globalSession = 0;
+bool NVIDIAGraphicsConfigManager::isNvAPIInitialized = false;
+NvDRSSessionHandle NVIDIAGraphicsConfigManager::globalSession = 0;
 
-void GraphicsConfigManager::PrintError(NvAPI_Status status)
+void NVIDIAGraphicsConfigManager::PrintError(NvAPI_Status status)
 {
     NvAPI_ShortString szDesc = {0};
     NvAPI_GetErrorMessage(status, szDesc);
     printf(" NVAPI error: %s\n", szDesc);
 }
 
-QList<QPair<QString, QPair<NvU32, NvU32>>> GraphicsConfigManager::getAllNvidiaSettings() {
+QList<QPair<QString, QPair<NvU32, NvU32>>> NVIDIAGraphicsConfigManager::getAllNvidiaSettings() {
     QList<QPair<QString, QPair<NvU32, NvU32>>> settingsList;
 
     if (!initializeNvAPI()) {
@@ -67,7 +67,7 @@ QList<QPair<QString, QPair<NvU32, NvU32>>> GraphicsConfigManager::getAllNvidiaSe
     return settingsList;
 }
 
-bool GraphicsConfigManager::initializeNvAPI()
+bool NVIDIAGraphicsConfigManager::initializeNvAPI()
 {
     if (!isNvAPIInitialized) {
         NvAPI_Status status = NvAPI_Initialize();
@@ -86,7 +86,7 @@ bool GraphicsConfigManager::initializeNvAPI()
     return true;
 }
 
-void GraphicsConfigManager::shutdownNvAPI()
+void NVIDIAGraphicsConfigManager::shutdownNvAPI()
 {
     if (isNvAPIInitialized) {
         NvAPI_DRS_DestroySession(globalSession);
@@ -95,7 +95,7 @@ void GraphicsConfigManager::shutdownNvAPI()
     }
 }
 
-NvU32 GraphicsConfigManager::getSettingId(const wchar_t* settingName) {
+NvU32 NVIDIAGraphicsConfigManager::getSettingId(const wchar_t* settingName) {
     NvU32 settingId = 0;
     QString qstr = QString::fromWCharArray(settingName);
     if (NvAPI_DRS_GetSettingIdFromName((NvU16*)(qstr.utf16()), &settingId) != NVAPI_OK) {
@@ -105,7 +105,7 @@ NvU32 GraphicsConfigManager::getSettingId(const wchar_t* settingName) {
 }
 
 // 新增的通用设置方法
-bool GraphicsConfigManager::applyNvidiaSetting(NVDRS_SETTING& drsSetting) {
+bool NVIDIAGraphicsConfigManager::applyNvidiaSetting(NVDRS_SETTING& drsSetting) {
     if (!initializeNvAPI()) return false;
 
     NvAPI_Status status = NvAPI_DRS_LoadSettings(globalSession);
@@ -132,7 +132,7 @@ bool GraphicsConfigManager::applyNvidiaSetting(NVDRS_SETTING& drsSetting) {
 }
 
 // 新增的通用查询方法
-void GraphicsConfigManager::FreeDisplayConfigResources(NV_DISPLAYCONFIG_PATH_INFO_V2* pathInfo, NvU32 pathCount) {
+void NVIDIAGraphicsConfigManager::FreeDisplayConfigResources(NV_DISPLAYCONFIG_PATH_INFO_V2* pathInfo, NvU32 pathCount) {
     for (NvU32 i = 0; i < pathCount; ++i) {
         delete pathInfo[i].sourceModeInfo;
         if (pathInfo[i].targetInfo) {
@@ -145,7 +145,7 @@ void GraphicsConfigManager::FreeDisplayConfigResources(NV_DISPLAYCONFIG_PATH_INF
     delete[] pathInfo;
 }
 
-NVDRS_SETTING GraphicsConfigManager::queryNvidiaSetting(const wchar_t* settingName) {
+NVDRS_SETTING NVIDIAGraphicsConfigManager::queryNvidiaSetting(const wchar_t* settingName) {
     NVDRS_SETTING setting = {0};
 
     if (!initializeNvAPI()) {
@@ -183,7 +183,7 @@ NVDRS_SETTING GraphicsConfigManager::queryNvidiaSetting(const wchar_t* settingNa
     return setting;
 }
 
-NvAPI_Status GraphicsConfigManager::AllocateAndGetDisplayConfig(NvU32* pathInfoCount, NV_DISPLAYCONFIG_PATH_INFO** pPathInfo)
+NvAPI_Status NVIDIAGraphicsConfigManager::AllocateAndGetDisplayConfig(NvU32* pathInfoCount, NV_DISPLAYCONFIG_PATH_INFO** pPathInfo)
 {
     NvAPI_Status ret;
 
@@ -263,7 +263,7 @@ NvAPI_Status GraphicsConfigManager::AllocateAndGetDisplayConfig(NvU32* pathInfoC
     return NVAPI_OK;
 }
 
-int GraphicsConfigManager::getVSyncMode() {
+int NVIDIAGraphicsConfigManager::getVSyncMode() {
     NVDRS_SETTING setting = queryNvidiaSetting(VSYNCMODE_STRING);
 
     switch(setting.u32CurrentValue)
@@ -305,7 +305,7 @@ int GraphicsConfigManager::getVSyncMode() {
     }
 }
 
-void GraphicsConfigManager::setVSyncMode(int mode) {
+void NVIDIAGraphicsConfigManager::setVSyncMode(int mode) {
     NVDRS_SETTING drsSetting = {0};
     drsSetting.version = NVDRS_SETTING_VER;
     drsSetting.settingId = getSettingId(VSYNCMODE_STRING);
@@ -365,7 +365,7 @@ void GraphicsConfigManager::setVSyncMode(int mode) {
     emit vSyncModeChanged();//触发信号，让qml更新u
 }
 
-int GraphicsConfigManager::getImageSharpeningStatus() {
+int NVIDIAGraphicsConfigManager::getImageSharpeningStatus() {
     //getAllNvidiaSettings();
     NVDRS_SETTING setting = queryNvidiaSetting(NV_QUALITY_UPSCALING_STRING);
 
@@ -384,7 +384,7 @@ int GraphicsConfigManager::getImageSharpeningStatus() {
     }
 }
 
-void GraphicsConfigManager::setImageSharpening(int index) {
+void NVIDIAGraphicsConfigManager::setImageSharpening(int index) {
     NVDRS_SETTING drsSetting = {0};
     drsSetting.version = NVDRS_SETTING_VER;
     drsSetting.settingId = getSettingId(NV_QUALITY_UPSCALING_STRING);
@@ -416,7 +416,7 @@ void GraphicsConfigManager::setImageSharpening(int index) {
     emit imageSharpeningChanged();//触发信号，让qml更新u
 }
 
-int GraphicsConfigManager::getOpenGLGDICompatibility() {
+int NVIDIAGraphicsConfigManager::getOpenGLGDICompatibility() {
     NVDRS_SETTING setting = queryNvidiaSetting(OGL_CPL_GDI_COMPATIBILITY_STRING);
     switch(setting.u32CurrentValue) {
         case OGL_CPL_GDI_COMPATIBILITY_PREFER_DISABLED: return 1;
@@ -426,7 +426,7 @@ int GraphicsConfigManager::getOpenGLGDICompatibility() {
     }
 }
 
-void GraphicsConfigManager::setOpenGLGDICompatibility(int mode) {
+void NVIDIAGraphicsConfigManager::setOpenGLGDICompatibility(int mode) {
     NVDRS_SETTING drsSetting = {0};
     drsSetting.version = NVDRS_SETTING_VER;
     drsSetting.settingId = getSettingId(OGL_CPL_GDI_COMPATIBILITY_STRING);
@@ -447,7 +447,7 @@ void GraphicsConfigManager::setOpenGLGDICompatibility(int mode) {
     emit openGLGDICompatibilityChanged();//触发信号，让qml更新u
 }
 
-int GraphicsConfigManager::getOpenGLPresentMethod() {
+int NVIDIAGraphicsConfigManager::getOpenGLPresentMethod() {
     NVDRS_SETTING setting = queryNvidiaSetting(OGL_CPL_PREFER_DXPRESENT_STRING);
     switch(setting.u32CurrentValue) {
         case OGL_CPL_PREFER_DXPRESENT_PREFER_DISABLED: return 1;
@@ -457,7 +457,7 @@ int GraphicsConfigManager::getOpenGLPresentMethod() {
     }
 }
 
-void GraphicsConfigManager::setOpenGLPresentMethod(int mode) {
+void NVIDIAGraphicsConfigManager::setOpenGLPresentMethod(int mode) {
     NVDRS_SETTING drsSetting = {0};
     drsSetting.version = NVDRS_SETTING_VER;
     drsSetting.settingId = getSettingId(OGL_CPL_PREFER_DXPRESENT_STRING);
@@ -478,7 +478,7 @@ void GraphicsConfigManager::setOpenGLPresentMethod(int mode) {
     emit openGLPresentMethodChanged();//触发信号，让qml更新u
 }
 
-int GraphicsConfigManager::getTripleBuffer() {
+int NVIDIAGraphicsConfigManager::getTripleBuffer() {
     NVDRS_SETTING setting = queryNvidiaSetting(OGL_TRIPLE_BUFFER_STRING);
     switch(setting.u32CurrentValue) {
         case OGL_TRIPLE_BUFFER_DISABLED: return 1;
@@ -487,7 +487,7 @@ int GraphicsConfigManager::getTripleBuffer() {
     }
 }
 
-void GraphicsConfigManager::setTripleBuffer(int mode) {
+void NVIDIAGraphicsConfigManager::setTripleBuffer(int mode) {
     NVDRS_SETTING drsSetting = {0};
     drsSetting.version = NVDRS_SETTING_VER;
     drsSetting.settingId = getSettingId(OGL_TRIPLE_BUFFER_STRING);
@@ -508,7 +508,7 @@ void GraphicsConfigManager::setTripleBuffer(int mode) {
 }
 
 
-int GraphicsConfigManager::getPowerManagementMode() {
+int NVIDIAGraphicsConfigManager::getPowerManagementMode() {
     NVDRS_SETTING setting = queryNvidiaSetting(PREFERRED_PSTATE_STRING);
 
     switch(setting.u32CurrentValue) {
@@ -522,7 +522,7 @@ int GraphicsConfigManager::getPowerManagementMode() {
     }
 }
 
-void GraphicsConfigManager::setPowerManagementMode(int mode) {
+void NVIDIAGraphicsConfigManager::setPowerManagementMode(int mode) {
     NVDRS_SETTING drsSetting = {0};
     drsSetting.version = NVDRS_SETTING_VER;
     drsSetting.settingId = getSettingId(PREFERRED_PSTATE_STRING);
@@ -546,12 +546,12 @@ void GraphicsConfigManager::setPowerManagementMode(int mode) {
     emit powerManagementModeChanged();//触发信号，让qml更新u
 }
 
-int GraphicsConfigManager::getAppIdleFPSLimit() {
+int NVIDIAGraphicsConfigManager::getAppIdleFPSLimit() {
     NVDRS_SETTING setting = queryNvidiaSetting(APPIDLE_DYNAMIC_FRL_FPS_STRING);
     return setting.u32CurrentValue;
 }
 
-void GraphicsConfigManager::setAppIdleFPSLimit(int fps) {
+void NVIDIAGraphicsConfigManager::setAppIdleFPSLimit(int fps) {
     NVDRS_SETTING drsSetting = {0};
     drsSetting.version = NVDRS_SETTING_VER;
     drsSetting.settingId = getSettingId(APPIDLE_DYNAMIC_FRL_FPS_STRING); // 确保这是正确的ID，可能需要根据实际情况调整，或者使用NVDRS_SETTING_ID_APPIDLE_DYNAMIC_FRL_FPS;
@@ -564,12 +564,12 @@ void GraphicsConfigManager::setAppIdleFPSLimit(int fps) {
     emit appIdleFPSLimitChanged();//触发信号，让qml更新u
 }
 
-int GraphicsConfigManager::getAnisotropicFiltering() {
+int NVIDIAGraphicsConfigManager::getAnisotropicFiltering() {
     NVDRS_SETTING setting = queryNvidiaSetting(ANISO_MODE_LEVEL_STRING);
     return (setting.u32CurrentValue & ANISO_MODE_LEVEL_MASK) - 1;//qml array组件只能从0开始计数
 }
 
-void GraphicsConfigManager::setAnisotropicFiltering(int level) {
+void NVIDIAGraphicsConfigManager::setAnisotropicFiltering(int level) {
     level +=1;//qml array组件只能从0开始计数
 
     {
@@ -626,7 +626,7 @@ void GraphicsConfigManager::setAnisotropicFiltering(int level) {
     emit anisotropicFilteringChanged();//触发信号，让qml更新u
 }
 
-int GraphicsConfigManager::getAAModeSelector() {
+int NVIDIAGraphicsConfigManager::getAAModeSelector() {
     NVDRS_SETTING setting = queryNvidiaSetting(AA_MODE_SELECTOR_STRING);
     switch(setting.u32CurrentValue) {
         case AA_MODE_SELECTOR_APP_CONTROL: return 0;
@@ -636,7 +636,7 @@ int GraphicsConfigManager::getAAModeSelector() {
     }
 }
 
-void GraphicsConfigManager::setAAModeSelector(int mode) {
+void NVIDIAGraphicsConfigManager::setAAModeSelector(int mode) {
     {
         if(mode == 2 || mode == 3)//如果是“提高应用程序设置”或"置换任何应用程序设置"
         {
@@ -667,7 +667,7 @@ void GraphicsConfigManager::setAAModeSelector(int mode) {
     emit aaModeSelectorChanged();
 }
 
-int GraphicsConfigManager::getAAModeMethod() {
+int NVIDIAGraphicsConfigManager::getAAModeMethod() {
     NVDRS_SETTING setting = queryNvidiaSetting(AA_MODE_METHOD_STRING);
     
     switch(setting.u32CurrentValue) {
@@ -680,7 +680,7 @@ int GraphicsConfigManager::getAAModeMethod() {
     }
 }
 
-void GraphicsConfigManager::setAAModeMethod(int mode) {
+void NVIDIAGraphicsConfigManager::setAAModeMethod(int mode) {
     NVDRS_SETTING setting = {0};
     setting.version = NVDRS_SETTING_VER;
     setting.settingId = AA_MODE_METHOD_ID;
@@ -703,7 +703,7 @@ void GraphicsConfigManager::setAAModeMethod(int mode) {
     emit aaModeMethodChanged();
 }
 
-int GraphicsConfigManager::getFXAAEnable() {
+int NVIDIAGraphicsConfigManager::getFXAAEnable() {
     NVDRS_SETTING setting = queryNvidiaSetting(FXAA_ENABLE_STRING);
     switch(setting.u32CurrentValue) {
         case FXAA_ENABLE_OFF: return 1;
@@ -712,7 +712,7 @@ int GraphicsConfigManager::getFXAAEnable() {
     }
 }
 
-void GraphicsConfigManager::setFXAAEnable(int index) {
+void NVIDIAGraphicsConfigManager::setFXAAEnable(int index) {
     NVDRS_SETTING setting = {0};
     setting.version = NVDRS_SETTING_VER;
     setting.settingId = getSettingId(FXAA_ENABLE_STRING);
@@ -733,12 +733,12 @@ void GraphicsConfigManager::setFXAAEnable(int index) {
 }
 
 
-int GraphicsConfigManager::getAAGammaCorrection() {
+int NVIDIAGraphicsConfigManager::getAAGammaCorrection() {
     NVDRS_SETTING setting = queryNvidiaSetting(AA_MODE_GAMMACORRECTION_STRING);
     return setting.u32CurrentValue; // 直接返回原始值
 }
 
-void GraphicsConfigManager::setAAGammaCorrection(int level) {
+void NVIDIAGraphicsConfigManager::setAAGammaCorrection(int level) {
     NVDRS_SETTING setting = {0};
     setting.version = NVDRS_SETTING_VER;
     setting.settingId = getSettingId(AA_MODE_GAMMACORRECTION_STRING);
@@ -757,12 +757,12 @@ void GraphicsConfigManager::setAAGammaCorrection(int level) {
     emit aaGammaCorrectionChanged();
 }
 
-int GraphicsConfigManager::getAATransparency() {
+int NVIDIAGraphicsConfigManager::getAATransparency() {
     NVDRS_SETTING setting = queryNvidiaSetting(AA_MODE_REPLAY_STRING);//英伟达控制面板查到的是0 0 20 36 52
     return setting.u32CurrentValue & 0x00000070;
 }
 
-void GraphicsConfigManager::setAATransparency(int mode) {
+void NVIDIAGraphicsConfigManager::setAATransparency(int mode) {
     NVDRS_SETTING setting = queryNvidiaSetting(AA_MODE_REPLAY_STRING);
     
     {
@@ -795,7 +795,7 @@ void GraphicsConfigManager::setAATransparency(int mode) {
 }
 
 
-int GraphicsConfigManager::getLowLatencyMode() {
+int NVIDIAGraphicsConfigManager::getLowLatencyMode() {
     NVDRS_SETTING setting = queryNvidiaSetting(PRERENDERLIMIT_STRING);
     int index = 0;
     switch(setting.u32CurrentValue)
@@ -817,7 +817,7 @@ int GraphicsConfigManager::getLowLatencyMode() {
     return index;
 }
 
-void GraphicsConfigManager::setLowLatencyMode(int value) {
+void NVIDIAGraphicsConfigManager::setLowLatencyMode(int value) {
     NVDRS_SETTING setting = {0};
     setting.version = NVDRS_SETTING_VER;
     setting.settingId = PRERENDERLIMIT_ID;
@@ -840,12 +840,12 @@ void GraphicsConfigManager::setLowLatencyMode(int value) {
 
 
 
-int GraphicsConfigManager::getMaxFPSLimit() {
+int NVIDIAGraphicsConfigManager::getMaxFPSLimit() {
     NVDRS_SETTING setting = queryNvidiaSetting(FRL_FPS_STRING);
     return setting.u32CurrentValue;
 }
 
-void GraphicsConfigManager::setMaxFPSLimit(int limit) {
+void NVIDIAGraphicsConfigManager::setMaxFPSLimit(int limit) {
     NVDRS_SETTING setting = {0};
     setting.version = NVDRS_SETTING_VER;
     setting.settingId = FRL_FPS_ID;
@@ -858,7 +858,7 @@ void GraphicsConfigManager::setMaxFPSLimit(int limit) {
     emit maxFPSLimitChanged();
 }
 
-int GraphicsConfigManager::getAoMode()  {
+int NVIDIAGraphicsConfigManager::getAoMode()  {
     NVDRS_SETTING setting = queryNvidiaSetting(AO_MODE_STRING);
     switch(setting.u32CurrentValue) {
         case AO_MODE_OFF: return 0;
@@ -869,7 +869,7 @@ int GraphicsConfigManager::getAoMode()  {
     }
 }
 
-void GraphicsConfigManager::setAoMode(int value) {
+void NVIDIAGraphicsConfigManager::setAoMode(int value) {
     NVDRS_SETTING setting = {0};
     setting.version = NVDRS_SETTING_VER;
     setting.settingId = AO_MODE_ID;
@@ -888,12 +888,12 @@ void GraphicsConfigManager::setAoMode(int value) {
 }
 
 
-int GraphicsConfigManager::getShaderCacheSize() {
+int NVIDIAGraphicsConfigManager::getShaderCacheSize() {
     NVDRS_SETTING setting = queryNvidiaSetting(PS_SHADERDISKCACHE_MAX_SIZE_STRING);
     return setting.u32CurrentValue;
 }
 
-void GraphicsConfigManager::setShaderCacheSize(int value) {
+void NVIDIAGraphicsConfigManager::setShaderCacheSize(int value) {
     NVDRS_SETTING setting = {0};
     setting.version = NVDRS_SETTING_VER;
     setting.settingId = PS_SHADERDISKCACHE_MAX_SIZE_ID;
@@ -907,13 +907,13 @@ void GraphicsConfigManager::setShaderCacheSize(int value) {
     emit shaderCacheSizeChanged();//get set不在同一个控件里，得自己触发
 }
 
-int GraphicsConfigManager::getTrilinearOptimization()
+int NVIDIAGraphicsConfigManager::getTrilinearOptimization()
 {
     NVDRS_SETTING setting = queryNvidiaSetting(PS_TEXFILTER_DISABLE_TRILIN_SLOPE_STRING);
     return setting.u32CurrentValue;
 }
 
-void GraphicsConfigManager::setTrilinearOptimization(int mode)
+void NVIDIAGraphicsConfigManager::setTrilinearOptimization(int mode)
 {
     NVDRS_SETTING setting = {};
     setting.version = NVDRS_SETTING_VER;
@@ -928,12 +928,12 @@ void GraphicsConfigManager::setTrilinearOptimization(int mode)
     emit trilinearOptimizationChanged();
 }
 
-int GraphicsConfigManager::getAnisotropicSampleOptimization() {
+int NVIDIAGraphicsConfigManager::getAnisotropicSampleOptimization() {
     NVDRS_SETTING setting = queryNvidiaSetting(PS_TEXFILTER_ANISO_OPTS2_STRING);
     return setting.u32CurrentValue;
 }
 
-void GraphicsConfigManager::setAnisotropicSampleOptimization(int mode) {
+void NVIDIAGraphicsConfigManager::setAnisotropicSampleOptimization(int mode) {
     NVDRS_SETTING setting;
     setting.version = NVDRS_SETTING_VER;
     setting.settingId = PS_TEXFILTER_ANISO_OPTS2_ID;
@@ -947,12 +947,12 @@ void GraphicsConfigManager::setAnisotropicSampleOptimization(int mode) {
     }
 }
 
-int GraphicsConfigManager::getNegativeLODBias() {
+int NVIDIAGraphicsConfigManager::getNegativeLODBias() {
     NVDRS_SETTING setting = queryNvidiaSetting(PS_TEXFILTER_NO_NEG_LODBIAS_STRING);
     return setting.u32CurrentValue;
 }
 
-void GraphicsConfigManager::setNegativeLODBias(int mode) {
+void NVIDIAGraphicsConfigManager::setNegativeLODBias(int mode) {
     NVDRS_SETTING setting = {};
     setting.version = NVDRS_SETTING_VER;
     setting.settingId = PS_TEXFILTER_NO_NEG_LODBIAS_ID;
@@ -966,7 +966,7 @@ void GraphicsConfigManager::setNegativeLODBias(int mode) {
     }
 }
 
-int GraphicsConfigManager::getTextureFilterQuality() {
+int NVIDIAGraphicsConfigManager::getTextureFilterQuality() {
     NVDRS_SETTING setting = queryNvidiaSetting(QUALITY_ENHANCEMENTS_STRING);
 
     switch(setting.u32CurrentValue)
@@ -984,7 +984,7 @@ int GraphicsConfigManager::getTextureFilterQuality() {
     }
 }
 
-void GraphicsConfigManager::setTextureFilterQuality(int quality) {
+void NVIDIAGraphicsConfigManager::setTextureFilterQuality(int quality) {
     NVDRS_SETTING setting = {0};
     setting.version = NVDRS_SETTING_VER;
     setting.settingId = QUALITY_ENHANCEMENTS_ID;
@@ -1015,7 +1015,7 @@ void GraphicsConfigManager::setTextureFilterQuality(int quality) {
     }
 }
 
-int GraphicsConfigManager::getThreadControl() {
+int NVIDIAGraphicsConfigManager::getThreadControl() {
     NVDRS_SETTING setting = queryNvidiaSetting(OGL_THREAD_CONTROL_STRING);
 
     switch(setting.u32CurrentValue)
@@ -1031,7 +1031,7 @@ int GraphicsConfigManager::getThreadControl() {
     }
 }
 
-void GraphicsConfigManager::setThreadControl(int mode) {
+void NVIDIAGraphicsConfigManager::setThreadControl(int mode) {
     NVDRS_SETTING setting = {0};
     setting.version = NVDRS_SETTING_VER;
     setting.settingId = OGL_THREAD_CONTROL_ID;
@@ -1078,7 +1078,7 @@ const QString DecodeScalingMode(NvU32 scaling) {
     }
 }
 
-QByteArray GraphicsConfigManager::getScalingMode() {
+QByteArray NVIDIAGraphicsConfigManager::getScalingMode() {
     QJsonObject root;
     NvAPI_Status status = NVAPI_OK;
     NvU32 deviceCount = 0;
@@ -1163,7 +1163,7 @@ QByteArray GraphicsConfigManager::getScalingMode() {
     return QJsonDocument(root).toJson();
 }
 
-void GraphicsConfigManager::setScalingMode(const QByteArray& params)
+void NVIDIAGraphicsConfigManager::setScalingMode(const QByteArray& params)
 {
     QByteArray decodedParams = QByteArray::fromBase64(params);
     QJsonDocument doc = QJsonDocument::fromJson(decodedParams);

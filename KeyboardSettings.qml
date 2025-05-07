@@ -60,11 +60,11 @@ GroupBox {
         Button {
             text: "推荐设置"
             ToolTip.visible: hovered
-            ToolTip.text: "推荐设置：重复延迟1档(500ms)，重复速度20档(20字符/秒)"
+            ToolTip.text: "推荐设置：重复延迟0档(250ms)，重复速度31档(31字符/秒)"
             ToolTip.delay: 200
             onClicked: {
-                keyboardConfig.setRepeatDelay(1)
-                keyboardConfig.setRepeatRate(20)
+                keyboardConfig.setRepeatDelay(0)
+                keyboardConfig.setRepeatRate(31)
             }
         }
     }

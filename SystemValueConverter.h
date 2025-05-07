@@ -15,4 +15,5 @@ public:
     static QVariant registryToDisplay(DWORD value);
     static DWORD displayToRegistry(const QVariant& value);
     Q_INVOKABLE static QVariant convertToRegistryFormat(const QString& value);
+    Q_INVOKABLE static QString getGPUVendor();
 };

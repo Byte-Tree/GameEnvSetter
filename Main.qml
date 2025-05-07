@@ -2,22 +2,25 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts 1.15
 import ConfigManagers 1.0
-
+import SystemValueConverter 1.0
 import Qt.labs.platform as Platform
 
 ApplicationWindow {
+    id: mainWindow
     visible: true
     width: 800
     height: 600
     title: qsTr("系统设置工具")
     property bool firstRun: false
     property bool configSaved: false
+    property string gpuVendor: ""
 
     //给后端类在qml声明,注册在main.cpp里面
     MouseConfigManager { id: mouseConfig }
     KeyboardConfigManager { id: keyboardConfig }
     RegistryOperator { id: registryOperator }
-    GraphicsConfigManager{ id: graphicsConfig }
+    NVIDIAGraphicsConfigManager { id: nvidiaGraphicsConfig }
+    DisplayConfigManager { id: displayConfig }
     ConfigManager { id: configManager }
 
     Component.onCompleted: {
@@ -25,6 +28,9 @@ ApplicationWindow {
         if(firstRun) {
             firstRunDialog.open()
         }
+        // 获取显卡厂商并存储
+        gpuVendor = SystemValueConverter.getGPUVendor();
+        console.log("Main.qml中gpuVendor的值: " + gpuVendor);
     }
 
     ScrollView {
@@ -56,13 +62,7 @@ ApplicationWindow {
                 text: "还原默认设置"
                 onClicked: {
                     try {
-                        var config = configManager.loadConfig()
-                        mouseConfig.setDoubleClickSpeed(config.mouse.doubleClickSpeed)
-                        mouseConfig.setMouseSpeed(config.mouse.mouseSpeed)
-                        mouseConfig.setEnhancePointerPrecision(config.mouse.enhancePointerPrecision)
-                        keyboardConfig.setRepeatDelay(config.keyboard.repeatDelay)
-                        keyboardConfig.setRepeatRate(config.keyboard.repeatRate)
-                        registryOperator.setWin32PrioritySeparation(config.registry.win32PrioritySeparation)
+                        loadConfigToUI(configManager.loadConfig())
                         toolTip.show("默认配置已应用", 2000)
                     } catch(error) {
                         toolTip.show("加载默认配置失败：" + error, 3000)
@@ -82,7 +82,11 @@ ApplicationWindow {
 
         RegistrySettings {}
 
-        GraphicsSettings {}
+        DisplaySettings {}
+
+        GraphicsSettings {
+            gpuVendor: mainWindow.gpuVendor//带控件id赋值，不然有歧义会导致值传过不过去
+        }
         }
     }
 
@@ -104,7 +108,12 @@ ApplicationWindow {
     }
 
     Connections {
-        target: graphicsConfig
+        target: nvidiaGraphicsConfig
+        function onErrorOccurred(msg) { toolTip.show(msg, 2000) }
+    }
+
+    Connections {
+        target: displayConfig
         function onErrorOccurred(msg) { toolTip.show(msg, 2000) }
     }
 
@@ -124,21 +133,13 @@ ApplicationWindow {
             anchors.fill: parent
         }
         onAccepted: {
-            configManager.saveConfig({
-                "mouse": {
-                    "doubleClickSpeed": mouseConfig.doubleClickSpeed,
-                    "mouseSpeed": mouseConfig.mouseSpeed,
-                    "enhancePointerPrecision": mouseConfig.enhancePointerPrecision
-                },
-                "keyboard": {
-                    "repeatDelay": keyboardConfig.repeatDelay,
-                    "repeatRate": keyboardConfig.repeatRate
-                },
-                "registry": {
-                    "win32PrioritySeparation": registryOperator.win32PrioritySeparation
-                }
-            })
-            configSaved = true
+            try {
+                configManager.saveConfig(generateCurrentConfig());
+                configSaved = true;
+                toolTip.show("原始配置已保存", 2000);
+            } catch(error) {
+                toolTip.show("保存失败：" + error, 3000);
+            }
         }
         onRejected: {
             if(!configManager.userConfigExists()) {
@@ -168,22 +169,8 @@ ApplicationWindow {
       nameFilters: ["INI文件 (*.ini)"]
       fileMode: Platform.FileDialog.SaveFile
       onAccepted: {
-          var currentConfig = {
-              "mouse": {
-                  doubleClickSpeed: mouseConfig.doubleClickSpeed,
-                  mouseSpeed: mouseConfig.mouseSpeed,
-                  enhancePointerPrecision: mouseConfig.enhancePointerPrecision
-              },
-              "keyboard": {
-                  repeatDelay: keyboardConfig.repeatDelay,
-                  repeatRate: keyboardConfig.repeatRate
-              },
-              "registry": {
-                  win32PrioritySeparation: registryOperator.win32PrioritySeparation
-              }
-          };
           try {
-                    configManager.saveUserConfig(currentConfig, saveFileDialog.currentFile);
+                    configManager.saveUserConfig(generateCurrentConfig(), saveFileDialog.currentFile);
                     toolTip.show("用户配置已保存", 2000);
             }
           catch(error){
@@ -209,4 +196,110 @@ ApplicationWindow {
       }
     }
 
+
+    function loadConfigToUI(config) {
+        // 鼠标设置
+        mouseConfig.setDoubleClickSpeed(config.mouse.doubleClickSpeed)
+        mouseConfig.setMouseSpeed(config.mouse.mouseSpeed)
+        mouseConfig.setEnhancePointerPrecision(config.mouse.enhancePointerPrecision)
+
+        // 键盘设置
+        keyboardConfig.setRepeatDelay(config.keyboard.repeatDelay)
+        keyboardConfig.setRepeatRate(config.keyboard.repeatRate)
+
+        // 注册表设置
+        registryOperator.setWin32PrioritySeparation(config.registry.win32PrioritySeparation)
+
+        // 根据显卡类型加载图形设置（使用switch结构）
+        switch(gpuVendor) {
+            case "NVIDIA":
+                nvidiaGraphicsConfig.imageSharpening = config.graphics.imageSharpening
+                nvidiaGraphicsConfig.openGLGDICompatibility = config.graphics.openGLGDICompatibility
+                nvidiaGraphicsConfig.openGLPresentMethod = config.graphics.openGLPresentMethod
+                nvidiaGraphicsConfig.tripleBuffer = config.graphics.tripleBuffer
+                nvidiaGraphicsConfig.lowLatencyMode = config.graphics.lowLatencyMode
+                nvidiaGraphicsConfig.anisotropicFiltering = config.graphics.anisotropicFiltering
+                nvidiaGraphicsConfig.appIdleFPSLimit = config.graphics.appIdleFPSLimit
+                nvidiaGraphicsConfig.vSyncMode = config.graphics.vSyncMode
+                nvidiaGraphicsConfig.fxaaEnable = config.graphics.fxaaEnable
+                nvidiaGraphicsConfig.aaModeSelector = config.graphics.aaModeSelector
+                nvidiaGraphicsConfig.aaGammaCorrection = config.graphics.aaGammaCorrection
+                nvidiaGraphicsConfig.aaModeMethod = config.graphics.aaModeMethod
+                nvidiaGraphicsConfig.aaTransparency = config.graphics.aaTransparency
+                nvidiaGraphicsConfig.maxFPSLimit = config.graphics.maxFPSLimit
+                nvidiaGraphicsConfig.aoMode = config.graphics.aoMode
+                nvidiaGraphicsConfig.powerManagementMode = config.graphics.powerManagementMode
+                nvidiaGraphicsConfig.shaderCacheSize = config.graphics.shaderCacheSize
+                nvidiaGraphicsConfig.trilinearOptimization = config.graphics.trilinearOptimization
+                nvidiaGraphicsConfig.anisotropicSampleOptimization = config.graphics.anisotropicSampleOptimization
+                nvidiaGraphicsConfig.negativeLODBias = config.graphics.negativeLODBias
+                nvidiaGraphicsConfig.textureFilterQuality = config.graphics.textureFilterQuality
+                nvidiaGraphicsConfig.threadControl = config.graphics.threadControl
+                break;
+            case "AMD":
+                // 可扩展AMD显卡加载逻辑
+                break;
+            case "Intel":
+                // 可扩展Intel显卡加载逻辑
+                break;
+            default:
+                break;
+        }
+    }
+
+    function generateCurrentConfig() {
+        return {
+            "mouse": {
+                doubleClickSpeed: mouseConfig.doubleClickSpeed,
+                mouseSpeed: mouseConfig.mouseSpeed,
+                enhancePointerPrecision: mouseConfig.enhancePointerPrecision
+            },
+            "keyboard": {
+                repeatDelay: keyboardConfig.repeatDelay,
+                repeatRate: keyboardConfig.repeatRate
+            },
+            "registry": {
+                win32PrioritySeparation: registryOperator.win32PrioritySeparation
+            },
+            "graphics": (function() {
+                switch(gpuVendor) {
+                    case "NVIDIA":
+                        return {
+                            imageSharpening: nvidiaGraphicsConfig.imageSharpening,
+                            openGLGDICompatibility: nvidiaGraphicsConfig.openGLGDICompatibility,
+                            openGLPresentMethod: nvidiaGraphicsConfig.openGLPresentMethod,
+                            tripleBuffer: nvidiaGraphicsConfig.tripleBuffer,
+                            lowLatencyMode: nvidiaGraphicsConfig.lowLatencyMode,
+                            anisotropicFiltering: nvidiaGraphicsConfig.anisotropicFiltering,
+                            appIdleFPSLimit: nvidiaGraphicsConfig.appIdleFPSLimit,
+                            vSyncMode: nvidiaGraphicsConfig.vSyncMode,
+                            fxaaEnable: nvidiaGraphicsConfig.fxaaEnable,
+                            aaModeSelector: nvidiaGraphicsConfig.aaModeSelector,
+                            aaGammaCorrection: nvidiaGraphicsConfig.aaGammaCorrection,
+                            aaModeMethod: nvidiaGraphicsConfig.aaModeMethod,
+                            aaTransparency: nvidiaGraphicsConfig.aaTransparency,
+                            maxFPSLimit: nvidiaGraphicsConfig.maxFPSLimit,
+                            aoMode: nvidiaGraphicsConfig.aoMode,
+                            powerManagementMode: nvidiaGraphicsConfig.powerManagementMode,
+                            shaderCacheSize: nvidiaGraphicsConfig.shaderCacheSize,
+                            trilinearOptimization: nvidiaGraphicsConfig.trilinearOptimization,
+                            anisotropicSampleOptimization: nvidiaGraphicsConfig.anisotropicSampleOptimization,
+                            negativeLODBias: nvidiaGraphicsConfig.negativeLODBias,
+                            textureFilterQuality: nvidiaGraphicsConfig.textureFilterQuality,
+                            threadControl: nvidiaGraphicsConfig.threadControl
+                        };
+                    case "AMD":
+                        // 可扩展AMD显卡配置项
+                        return {};
+                    case "Intel":
+                        // 可扩展Intel显卡配置项
+                        return {};
+                    default:
+                        return {};
+                }
+            })()
+        };
+    }
+
 }
+
