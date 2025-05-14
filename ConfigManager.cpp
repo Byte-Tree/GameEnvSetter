@@ -30,44 +30,6 @@ void ConfigManager::saveUserConfig(const QVariantMap &config, const QString &pat
         saveGraphicsSettings(settings, config);
         //settings.sync();
         handleSaveResult(settings);
-    QString gpuVendor = config["graphics"].toMap()["gpuVendor"].toString();
-    settings.setValue("GPUVendor", gpuVendor);
-    
-    if(gpuVendor == "NVIDIA") {
-        settings.beginGroup("NVIDIA");
-        settings.setValue("ImageSharpening", config["graphics"].toMap()["imageSharpening"]);
-        settings.setValue("OpenGLGDICompatibility", config["graphics"].toMap()["openGLGDICompatibility"]);
-        settings.setValue("OpenGLPresentMethod", config["graphics"].toMap()["openGLPresentMethod"]);
-        settings.setValue("TripleBuffer", config["graphics"].toMap()["tripleBuffer"]);
-        settings.setValue("LowLatencyMode", config["graphics"].toMap()["lowLatencyMode"]);
-        settings.setValue("AnisotropicFiltering", config["graphics"].toMap()["anisotropicFiltering"]);
-        settings.setValue("AppIdleFPSLimit", config["graphics"].toMap()["appIdleFPSLimit"]);
-        settings.setValue("VSyncMode", config["graphics"].toMap()["vSyncMode"]);
-        settings.setValue("FXAAEnable", config["graphics"].toMap()["fxaaEnable"]);
-        settings.setValue("AAModeSelector", config["graphics"].toMap()["aaModeSelector"]);
-        settings.setValue("AAGammaCorrection", config["graphics"].toMap()["aaGammaCorrection"]);
-        settings.setValue("AAModeMethod", config["graphics"].toMap()["aaModeMethod"]);
-        settings.setValue("AATransparency", config["graphics"].toMap()["aaTransparency"]);
-        settings.setValue("MaxFPSLimit", config["graphics"].toMap()["maxFPSLimit"]);
-        settings.setValue("AOMode", config["graphics"].toMap()["aoMode"]);
-        settings.setValue("PowerManagementMode", config["graphics"].toMap()["powerManagementMode"]);
-        settings.setValue("ShaderCacheSize", config["graphics"].toMap()["shaderCacheSize"]);
-        settings.setValue("TrilinearOptimization", config["graphics"].toMap()["trilinearOptimization"]);
-        settings.setValue("AnisotropicSampleOptimization", config["graphics"].toMap()["anisotropicSampleOptimization"]);
-        settings.setValue("NegativeLODBias", config["graphics"].toMap()["negativeLODBias"]);
-        settings.setValue("TextureFilterQuality", config["graphics"].toMap()["textureFilterQuality"]);
-        settings.setValue("ThreadControl", config["graphics"].toMap()["threadControl"]);
-        settings.endGroup();
-    } else if(gpuVendor == "AMD") {
-        settings.beginGroup("AMD");
-        // 可扩展AMD显卡配置
-        settings.endGroup();
-    } else if(gpuVendor == "Intel") {
-        settings.beginGroup("Intel");
-        // 可扩展Intel显卡配置
-        settings.endGroup();
-    }
-    settings.endGroup();
     handleSaveResult(settings);
     }    catch (const std::exception &e) {
         emit errorOccurred(QString("保存失败: ") + e.what());
@@ -85,44 +47,6 @@ void ConfigManager::saveConfig(const QVariantMap &config)
         saveGraphicsSettings(settings, config);
         //settings.sync();
         handleSaveResult(settings);
-    QString gpuVendor = config["graphics"].toMap()["gpuVendor"].toString();
-    settings.setValue("GPUVendor", gpuVendor);
-    
-    if(gpuVendor == "NVIDIA") {
-        settings.beginGroup("NVIDIA");
-        settings.setValue("ImageSharpening", config["graphics"].toMap()["imageSharpening"]);
-        settings.setValue("OpenGLGDICompatibility", config["graphics"].toMap()["openGLGDICompatibility"]);
-        settings.setValue("OpenGLPresentMethod", config["graphics"].toMap()["openGLPresentMethod"]);
-        settings.setValue("TripleBuffer", config["graphics"].toMap()["tripleBuffer"]);
-        settings.setValue("LowLatencyMode", config["graphics"].toMap()["lowLatencyMode"]);
-        settings.setValue("AnisotropicFiltering", config["graphics"].toMap()["anisotropicFiltering"]);
-        settings.setValue("AppIdleFPSLimit", config["graphics"].toMap()["appIdleFPSLimit"]);
-        settings.setValue("VSyncMode", config["graphics"].toMap()["vSyncMode"]);
-        settings.setValue("FXAAEnable", config["graphics"].toMap()["fxaaEnable"]);
-        settings.setValue("AAModeSelector", config["graphics"].toMap()["aaModeSelector"]);
-        settings.setValue("AAGammaCorrection", config["graphics"].toMap()["aaGammaCorrection"]);
-        settings.setValue("AAModeMethod", config["graphics"].toMap()["aaModeMethod"]);
-        settings.setValue("AATransparency", config["graphics"].toMap()["aaTransparency"]);
-        settings.setValue("MaxFPSLimit", config["graphics"].toMap()["maxFPSLimit"]);
-        settings.setValue("AOMode", config["graphics"].toMap()["aoMode"]);
-        settings.setValue("PowerManagementMode", config["graphics"].toMap()["powerManagementMode"]);
-        settings.setValue("ShaderCacheSize", config["graphics"].toMap()["shaderCacheSize"]);
-        settings.setValue("TrilinearOptimization", config["graphics"].toMap()["trilinearOptimization"]);
-        settings.setValue("AnisotropicSampleOptimization", config["graphics"].toMap()["anisotropicSampleOptimization"]);
-        settings.setValue("NegativeLODBias", config["graphics"].toMap()["negativeLODBias"]);
-        settings.setValue("TextureFilterQuality", config["graphics"].toMap()["textureFilterQuality"]);
-        settings.setValue("ThreadControl", config["graphics"].toMap()["threadControl"]);
-        settings.endGroup();
-    } else if(gpuVendor == "AMD") {
-        settings.beginGroup("AMD");
-        // 可扩展AMD显卡配置
-        settings.endGroup();
-    } else if(gpuVendor == "Intel") {
-        settings.beginGroup("Intel");
-        // 可扩展Intel显卡配置
-        settings.endGroup();
-    }
-    settings.endGroup();
     handleSaveResult(settings);
     }
     catch (const std::exception &e) {
@@ -171,7 +95,9 @@ QVariantMap ConfigManager::loadFromPath(const QString &filePath) const {
     graphicsConfig["gpuVendor"] = gpuVendor;
     
     if(gpuVendor == "NVIDIA") {
+        qDebug() << "开始保存NVIDIA显卡配置";
         settings.beginGroup("NVIDIA");
+// 图形设置键名已统一为小驼峰命名
         graphicsConfig["imageSharpening"] = settings.value("ImageSharpening");
         graphicsConfig["openGLGDICompatibility"] = settings.value("OpenGLGDICompatibility");
         graphicsConfig["openGLPresentMethod"] = settings.value("OpenGLPresentMethod");
@@ -239,7 +165,9 @@ void ConfigManager::saveGraphicsSettings(QSettings &settings, const QVariantMap 
     settings.setValue("GPUVendor", gpuVendor);
 
     if(gpuVendor == "NVIDIA") {
+        qDebug() << "开始保存NVIDIA显卡配置";
         settings.beginGroup("NVIDIA");
+// 图形设置键名已统一为小驼峰命名
         settings.setValue("ImageSharpening", config["graphics"].toMap()["imageSharpening"]);
         settings.setValue("OpenGLGDICompatibility", config["graphics"].toMap()["openGLGDICompatibility"]);
         settings.setValue("OpenGLPresentMethod", config["graphics"].toMap()["openGLPresentMethod"]);
@@ -263,6 +191,7 @@ void ConfigManager::saveGraphicsSettings(QSettings &settings, const QVariantMap 
         settings.setValue("TextureFilterQuality", config["graphics"].toMap()["textureFilterQuality"]);
         settings.setValue("ThreadControl", config["graphics"].toMap()["threadControl"]);
         settings.endGroup();
+        qDebug() << "NVIDIA显卡配置保存完成";
     } else if(gpuVendor == "AMD") {
         settings.beginGroup("AMD");
         settings.endGroup();

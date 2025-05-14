@@ -134,7 +134,9 @@ ApplicationWindow {
         }
         onAccepted: {
             try {
-                configManager.saveConfig(generateCurrentConfig());
+                var configData = generateCurrentConfig();
+console.log("首次运行保存配置数据:", JSON.stringify(configData, null, 2));
+configManager.saveConfig(configData);
                 configSaved = true;
                 toolTip.show("原始配置已保存", 2000);
             } catch(error) {
@@ -170,7 +172,9 @@ ApplicationWindow {
       fileMode: Platform.FileDialog.SaveFile
       onAccepted: {
           try {
-                    configManager.saveUserConfig(generateCurrentConfig(), saveFileDialog.currentFile);
+                    var userConfig = generateCurrentConfig();
+console.log("用户保存配置数据:", JSON.stringify(userConfig, null, 2));
+configManager.saveUserConfig(userConfig, saveFileDialog.currentFile);
                     toolTip.show("用户配置已保存", 2000);
             }
           catch(error){
@@ -192,6 +196,41 @@ ApplicationWindow {
           keyboardConfig.setRepeatDelay(config.keyboard.repeatDelay)
           keyboardConfig.setRepeatRate(config.keyboard.repeatRate)
           registryOperator.setWin32PrioritySeparation(config.registry.win32PrioritySeparation)
+          
+          // 加载显卡配置
+          if(config.graphics) {
+              switch(gpuVendor) {
+                  case "NVIDIA":
+                      nvidiaGraphicsConfig.setLowLatencyMode(config.graphics.lowLatencyMode)
+                      nvidiaGraphicsConfig.setTripleBuffer(config.graphics.tripleBuffer)
+                      nvidiaGraphicsConfig.setAnisotropicFiltering(config.graphics.anisotropicFiltering)
+                      nvidiaGraphicsConfig.setMaxFPSLimit(config.graphics.maxFPSLimit)
+                      nvidiaGraphicsConfig.setVSyncMode(config.graphics.vSyncMode)
+                      nvidiaGraphicsConfig.setPowerManagementMode(config.graphics.powerManagementMode)
+                      nvidiaGraphicsConfig.setTextureFilterQuality(config.graphics.textureFilterQuality)
+                      nvidiaGraphicsConfig.setThreadControl(config.graphics.threadControl)
+                      nvidiaGraphicsConfig.setImageSharpening(config.graphics.imageSharpening)
+                      nvidiaGraphicsConfig.setOpenGLGDICompatibility(config.graphics.openGLGDICompatibility)
+                      nvidiaGraphicsConfig.setOpenGLPresentMethod(config.graphics.openGLPresentMethod)
+                      nvidiaGraphicsConfig.setFXAAEnable(config.graphics.fxaaEnable)
+                      nvidiaGraphicsConfig.setAAModeSelector(config.graphics.aaModeSelector)
+                      nvidiaGraphicsConfig.setAAGammaCorrection(config.graphics.aaGammaCorrection)
+                      nvidiaGraphicsConfig.setAAModeMethod(config.graphics.aaModeMethod)
+                      nvidiaGraphicsConfig.setAATransparency(config.graphics.aaTransparency)
+                      nvidiaGraphicsConfig.setAoMode(config.graphics.aoMode)
+                      nvidiaGraphicsConfig.setAppIdleFPSLimit(config.graphics.appIdleFPSLimit)
+                      nvidiaGraphicsConfig.setShaderCacheSize(config.graphics.shaderCacheSize)
+                      nvidiaGraphicsConfig.setNegativeLODBias(config.graphics.negativeLODBias)
+                      break
+                  case "AMD":
+                      // AMD显卡设置逻辑
+                      break
+                  case "Intel":
+                      // Intel显卡设置逻辑
+                      break
+              }
+          }
+          
           toolTip.show("三方配置已应用", 2000)
       }
     }
@@ -262,9 +301,12 @@ ApplicationWindow {
                 win32PrioritySeparation: registryOperator.win32PrioritySeparation
             },
             "graphics": (function() {
+                var graphicsObj = {
+                    gpuVendor: gpuVendor
+                };
                 switch(gpuVendor) {
                     case "NVIDIA":
-                        return {
+                        return Object.assign(graphicsObj, {
                             imageSharpening: nvidiaGraphicsConfig.imageSharpening,
                             openGLGDICompatibility: nvidiaGraphicsConfig.openGLGDICompatibility,
                             openGLPresentMethod: nvidiaGraphicsConfig.openGLPresentMethod,
@@ -287,7 +329,7 @@ ApplicationWindow {
                             negativeLODBias: nvidiaGraphicsConfig.negativeLODBias,
                             textureFilterQuality: nvidiaGraphicsConfig.textureFilterQuality,
                             threadControl: nvidiaGraphicsConfig.threadControl
-                        };
+                        });
                     case "AMD":
                         // 可扩展AMD显卡配置项
                         return {};

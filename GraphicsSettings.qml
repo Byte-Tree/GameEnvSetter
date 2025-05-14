@@ -53,7 +53,16 @@ GroupBox {
                 id: nvidiaSettingsLoader
                 width: parent.width
                 active: gpuVendor === "NVIDIA"
+                asynchronous: true
                 sourceComponent: nvidiaSettingsComponent
+
+    Binding {
+        target: nvidiaSettingsLoader
+        property: "active"
+        value: (gpuVendor === "NVIDIA")
+        delayed: true
+    }
+                property bool cacheLoader: true
                 
                 Component {
                     id: nvidiaSettingsComponent
@@ -230,17 +239,32 @@ GroupBox {
                             Button {
                                 text: "推荐设置"
                                 ToolTip.visible: hovered
-                                ToolTip.text: "推荐设置：低延时模式开(超高)，三重缓冲关，各向异性过滤16x，最大帧速率240，垂直同步关，电源管理模式最大性能，纹理过滤质量高性能，线程优化开"
+                                ToolTip.text: "包含21项优化设置：\n\n【性能优化】\n• 低延时模式：开(超高)\n• 三重缓冲：关\n• 线程优化：启用\n• 电源模式：最大性能\n\n【画质调整】\n• 各向异性过滤：8x\n• 纹理过滤质量：高性能\n• 环境光吸收：关\n• 平滑处理模式：置换应用程序设置\n• FXAA抗锯齿：启用\n• 透明度抗锯齿：超级采样2x\n• 多重采样：2x\n\n【显存管理】\n• 着色器缓存：4096MB\n• 空闲帧率限制：30FPS\n\n【OpenGL优化】\n• GDI兼容性：优先兼容性\n• 呈现方法：自动\n\n【全局设置】\n• 最大帧率：0（最大）FPS\n• 垂直同步：关\n• 图像锐化：关\n• 三线性优化：关\n• 负LOD偏移：锁定\n• 各向异性采样优化：关\n• 灰度纠正：关"
                                 ToolTip.delay: 200
                                 onClicked: {
                                     nvidiaGraphicsConfig.setLowLatencyMode(2);
                                     nvidiaGraphicsConfig.setTripleBuffer(1);
-                                    nvidiaGraphicsConfig.setAnisotropicFiltering(15);
-                                    nvidiaGraphicsConfig.setMaxFPSLimit(240);
+                                    nvidiaGraphicsConfig.setAnisotropicFiltering(7);
+                                    nvidiaGraphicsConfig.setMaxFPSLimit(0);
                                     nvidiaGraphicsConfig.setVSyncMode(2);
                                     nvidiaGraphicsConfig.setPowerManagementMode(2);
                                     nvidiaGraphicsConfig.setTextureFilterQuality(3);
                                     nvidiaGraphicsConfig.setThreadControl(1);
+                                    
+                                    nvidiaGraphicsConfig.setImageSharpening(1);
+                                    nvidiaGraphicsConfig.setOpenGLGDICompatibility(2);
+                                    nvidiaGraphicsConfig.setOpenGLPresentMethod(3);
+                                    nvidiaGraphicsConfig.setFXAAEnable(1);
+                                    nvidiaGraphicsConfig.setAAModeSelector(3);
+                                    nvidiaGraphicsConfig.setAAGammaCorrection(0);
+                                    nvidiaGraphicsConfig.setAAModeMethod(1);
+                                    nvidiaGraphicsConfig.setAATransparency(2);
+                                    nvidiaGraphicsConfig.setAoMode(0);
+                                    nvidiaGraphicsConfig.setAppIdleFPSLimit(30);
+                                    nvidiaGraphicsConfig.setShaderCacheSize(4096);
+                                    nvidiaGraphicsConfig.setTrilinearOptimization(1);
+                                    nvidiaGraphicsConfig.setAnisotropicSampleOptimization(0);
+                                    nvidiaGraphicsConfig.setNegativeLODBias(1);
                                 }
                             }
                         }
@@ -251,7 +275,7 @@ GroupBox {
                         title: "调整桌面尺寸和位置"
                         ColumnLayout {
                             spacing: 8
-                            RowLayout { Label { text: "选择缩放模式" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "屏幕缩放模式。" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "\"GPU\"和\"显示器\"前缀的意思是：缩放画面这个事er,是由谁来处理的。GPU来处理缩放后的图像，没有投放延迟，但是影响帧数，推荐GPU来处理。显示器来处理缩放后的图像，会有5ms的投放延迟，但是不会降低帧数。" } 
+                            RowLayout { Label { text: "选择缩放模式" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "屏幕缩放模式。" } Button { text: "?"; ToolTip.visible: hovered; ToolTip.text: "\"GPU\"和\"显示器\"前缀的意思是：缩放画面这个事er,是由谁来处理的。GPU来处理缩放后的图像，没有投放延迟，但是影响帧数，推荐GPU来处理。显示器来处理缩放后的图像，会有5ms的投放延迟，但是不会降低帧数。" }
                                 ComboBox {
                                     id: displayIdCombo
                                     model: [] // 初始模型为空
@@ -282,7 +306,7 @@ GroupBox {
                                     // 根据选择的显示器索引更新缩放模式下拉框
                                     function updateScalingModeCombo(displayIndex) {
                                         var scalingValue = 0;
-
+                                        
                                         // 查找对应显示器的缩放值
                                         for (var i = 0; i < scalingData.devices.length; i++) {
                                             for (var j = 0; j < scalingData.devices[i].targets.length; j++) {
@@ -292,7 +316,7 @@ GroupBox {
                                                 }
                                             }
                                         }
-
+                                        
                                         // 设置缩放模式下拉框的当前索引
                                         scalingModeCombo.currentIndex = scalingModeCombo.mapScalingValue(scalingValue);
                                     }
@@ -337,13 +361,10 @@ GroupBox {
                                         nvidiaGraphicsConfig.setScalingMode(Qt.btoa(JSON.stringify(params)));
                                     }
                                 }
-
                             }
-
-
+                            
                             
                         }
-
                     }
                     
                 }
@@ -354,7 +375,16 @@ GroupBox {
                 id: amdSettingsLoader
                 width: parent.width
                 active: gpuVendor === "AMD"
+                asynchronous: true
                 sourceComponent: amdSettingsComponent
+
+    Binding {
+        target: amdSettingsLoader
+        property: "active"
+        value: (gpuVendor === "AMD")
+        delayed: true
+    }
+                property bool cacheLoader: true
                 
                 Component {
                     id: amdSettingsComponent
@@ -371,7 +401,16 @@ GroupBox {
                 id: intelSettingsLoader
                 width: parent.width
                 active: gpuVendor === "Intel"
+                asynchronous: true
                 sourceComponent: intelSettingsComponent
+
+    Binding {
+        target: intelSettingsLoader
+        property: "active"
+        value: (gpuVendor === "Intel")
+        delayed: true
+    }
+                property bool cacheLoader: true
                 
                 Component {
                     id: intelSettingsComponent
