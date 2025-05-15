@@ -67,6 +67,90 @@ QList<QPair<QString, QPair<NvU32, NvU32>>> NVIDIAGraphicsConfigManager::getAllNv
     return settingsList;
 }
 
+NvAPI_Status NVIDIAGraphicsConfigManager::CheckDisplayConfig() {
+    NvAPI_Status status = NVAPI_OK;
+    NvU32 deviceCount = 0;
+    NV_DISPLAYCONFIG_PATH_INFO_V2* pathInfo = nullptr;
+
+    // 初始化NVIDIA API
+    if (!NVIDIAGraphicsConfigManager::initializeNvAPI()) {
+        qWarning().noquote() << QString("[错误] NVIDIA API初始化失败 (0x%1)").arg(status, 0, 16);
+        return NVAPI_API_NOT_INITIALIZED;
+    }
+
+    // 第一阶段：获取设备数量
+    status = NvAPI_DISP_GetDisplayConfig(&deviceCount, pathInfo);
+    if (status != NVAPI_OK || deviceCount == 0) {
+        qWarning().noquote() << QString("[错误] 无法获取显示设备数量 (0x%1)").arg(status, 0, 16);
+        return status ? status : NVAPI_ERROR;
+    }
+    qDebug().noquote() << QString("\n▶ 检测到 %1 个显示设备").arg(deviceCount);
+
+    // 分配路径信息内存
+    pathInfo = new NV_DISPLAYCONFIG_PATH_INFO_V2[deviceCount];
+    memset(pathInfo, 0, sizeof(NV_DISPLAYCONFIG_PATH_INFO_V2) * deviceCount);
+    for (NvU32 i = 0; i < deviceCount; ++i) {
+        pathInfo[i].version = NV_DISPLAYCONFIG_PATH_INFO_VER2;
+    }
+
+    // 第二阶段：获取详细配置
+    status = NvAPI_DISP_GetDisplayConfig(&deviceCount, pathInfo);
+    if (status != NVAPI_OK) {
+        qWarning().noquote() << QString("[错误] 无法获取显示配置详情 (0x%1)").arg(status, 0, 16);
+        delete[] pathInfo;
+        return status;
+    }
+    qDebug().noquote() << "▶ 成功获取显示配置结构";
+
+    // 初始化嵌套数据结构
+    for (NvU32 i = 0; i < deviceCount; ++i) {
+        pathInfo[i].sourceModeInfo = new NV_DISPLAYCONFIG_SOURCE_MODE_INFO_V1();
+        pathInfo[i].sourceModeInfo->reserved = 0;
+
+        if (pathInfo[i].targetInfoCount > 0) {
+            pathInfo[i].targetInfo = new NV_DISPLAYCONFIG_PATH_TARGET_INFO_V2[pathInfo[i].targetInfoCount];
+            for (NvU32 j = 0; j < pathInfo[i].targetInfoCount; ++j) {
+                pathInfo[i].targetInfo[j].details = new NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_V1();
+                pathInfo[i].targetInfo[j].details->version = NV_DISPLAYCONFIG_PATH_ADVANCED_TARGET_INFO_VER1;
+            }
+        }
+    }
+
+    // 第三阶段：验证配置
+    status = NvAPI_DISP_GetDisplayConfig(&deviceCount, pathInfo);
+    if (status == NVAPI_OK) {
+        qDebug().noquote() << "▶ 当前显示配置：";
+        for (NvU32 i = 0; i < deviceCount; ++i) {
+            qDebug().noquote() << QString("  设备#%1 有 %2 个显示目标").arg(i+1).arg(pathInfo[i].targetInfoCount);
+            for (NvU32 j = 0; j < pathInfo[i].targetInfoCount; ++j) {
+                qDebug().noquote() << QString("    → 目标%1: %2")
+                                          .arg(j+1)
+                                          .arg(DecodeScalingMode(pathInfo[i].targetInfo[j].details->scaling));
+            }
+        }
+    }
+
+    // 配置验证
+    status = NvAPI_DISP_SetDisplayConfig(deviceCount, pathInfo, NV_DISPLAYCONFIG_VALIDATE_ONLY);
+    if (status != NVAPI_OK) {
+        qWarning().noquote() << QString("[警告] 配置验证未通过 (0x%1)").arg(status, 0, 16);
+    }
+
+    // 内存清理
+    for (NvU32 i = 0; i < deviceCount; ++i) {
+        delete pathInfo[i].sourceModeInfo;
+        if (pathInfo[i].targetInfo) {
+            for (NvU32 j = 0; j < pathInfo[i].targetInfoCount; ++j) {
+                delete pathInfo[i].targetInfo[j].details;
+            }
+            delete[] pathInfo[i].targetInfo;
+        }
+    }
+    delete[] pathInfo;
+
+    return status;
+}
+
 bool NVIDIAGraphicsConfigManager::initializeNvAPI()
 {
     if (!isNvAPIInitialized) {
@@ -1059,7 +1143,7 @@ void NVIDIAGraphicsConfigManager::setThreadControl(int mode) {
     }
 }
 
-const QString DecodeScalingMode(NvU32 scaling) {
+const QString NVIDIAGraphicsConfigManager::DecodeScalingMode(NvU32 scaling) {
     switch(scaling) {
     case NV_SCALING_DEFAULT:
         return "默认缩放模式";

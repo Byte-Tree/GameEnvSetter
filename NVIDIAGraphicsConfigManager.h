@@ -40,6 +40,7 @@ private:
     bool applyNvidiaSetting(NVDRS_SETTING& drsSetting);
 public:
     static void PrintError(NvAPI_Status status);
+    const QString DecodeScalingMode(NvU32 scaling);
     //通过设置名称找设置名称对应的ID，或者直接看头文件就不用这个函数了
     static NvU32 getSettingId(const wchar_t* settingName);
     //获取所有可用的显卡设置

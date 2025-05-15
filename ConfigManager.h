@@ -21,7 +21,7 @@ private:
     void saveCommonSettings(QSettings &settings, const QVariantMap &config);
     void saveGraphicsSettings(QSettings &settings, const QVariantMap &config);
     void handleSaveResult(QSettings &settings);
-    
+    void saveSettings(const QString &path, const QVariantMap &config);
 signals:
     void errorOccurred(const QString &msg) const;
     void configSaved() const;

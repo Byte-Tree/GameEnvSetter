@@ -135,8 +135,8 @@ ApplicationWindow {
         onAccepted: {
             try {
                 var configData = generateCurrentConfig();
-console.log("首次运行保存配置数据:", JSON.stringify(configData, null, 2));
-configManager.saveConfig(configData);
+                console.log("首次运行保存配置数据:", JSON.stringify(configData, null, 2));
+                configManager.saveConfig(configData);
                 configSaved = true;
                 toolTip.show("原始配置已保存", 2000);
             } catch(error) {
@@ -173,8 +173,8 @@ configManager.saveConfig(configData);
       onAccepted: {
           try {
                     var userConfig = generateCurrentConfig();
-console.log("用户保存配置数据:", JSON.stringify(userConfig, null, 2));
-configManager.saveUserConfig(userConfig, saveFileDialog.currentFile);
+                    //console.log("用户保存配置数据:", JSON.stringify(userConfig, null, 2));
+                    configManager.saveUserConfig(userConfig, saveFileDialog.currentFile);
                     toolTip.show("用户配置已保存", 2000);
             }
           catch(error){

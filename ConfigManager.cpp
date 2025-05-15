@@ -19,40 +19,29 @@ bool ConfigManager::configExists() const
 
 
 
-void ConfigManager::saveUserConfig(const QVariantMap &config, const QString &path)
+void ConfigManager::saveSettings(const QString &path, const QVariantMap &config)
 {
     try {
-        QString cleanPath = path.startsWith("file:///") ? path.mid(8) : path;//qml传过来的路径有这个字符串，得去除才能保存
+        QString cleanPath = path.startsWith("file:///") ? path.mid(8) : path;
         QSettings settings(cleanPath, QSettings::IniFormat);
         settings.setValue("LastModified", QDateTime::currentDateTime());
         
         saveCommonSettings(settings, config);
         saveGraphicsSettings(settings, config);
-        //settings.sync();
         handleSaveResult(settings);
-    handleSaveResult(settings);
-    }    catch (const std::exception &e) {
+    } catch (const std::exception &e) {
         emit errorOccurred(QString("保存失败: ") + e.what());
-        //throw;
     }
+}
 
+void ConfigManager::saveUserConfig(const QVariantMap &config, const QString &path)
+{
+    saveSettings(path, config);
 }
 
 void ConfigManager::saveConfig(const QVariantMap &config)
 {
-    try{
-        QSettings settings(m_configPath, QSettings::IniFormat);
-        
-        saveCommonSettings(settings, config);
-        saveGraphicsSettings(settings, config);
-        //settings.sync();
-        handleSaveResult(settings);
-    handleSaveResult(settings);
-    }
-    catch (const std::exception &e) {
-        emit errorOccurred(QString("保存失败: ") + e.what());
-        //throw;
-    }
+    saveSettings(m_configPath, config);
 }
 
 QVariantMap ConfigManager::loadConfig() const
