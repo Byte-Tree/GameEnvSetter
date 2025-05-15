@@ -144,7 +144,7 @@ ApplicationWindow {
             }
         }
         onRejected: {
-            if(!configManager.userConfigExists()) {
+            if(!configManager.configExists()) {
                 toolTip.show("原始配置未保存，还原默认设置功能将不可用", 3000)
             }
         }
