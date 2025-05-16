@@ -27,7 +27,6 @@ qt_add_executable(appGameEnvSetter
 
 )
 
-target_compile_definitions(appGameEnvSetter PRIVATE _WIN32_WINNT=0x0600)
 target_link_options(appGameEnvSetter PRIVATE "/MANIFESTUAC:level='requireAdministrator'")
 
 
